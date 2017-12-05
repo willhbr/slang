@@ -120,7 +120,17 @@ class Parser
   end
 
   def identifier(token)
-    Slang::Identifier.new token.value.as(String)
+    value = token.value.as(String)
+    case value
+    when "nil"
+      Slang::Object.nil
+    when "true"
+      Slang::TrueClass.instance
+    when "false"
+      Slang::FalseClass.instance
+    else
+      Slang::Identifier.new value
+    end
   end
 
   def number(token)

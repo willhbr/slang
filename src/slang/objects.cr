@@ -10,6 +10,8 @@ module Slang
       raise "cannot call non-function object #{self}"
     end
 
+    abstract def truthy?
+
     def self.nil
       Empty.instance
     end
@@ -18,6 +20,10 @@ module Slang
   abstract class Fn < Object
     def to_s(io)
       io << "Function"
+    end
+
+    def truthy?
+      true
     end
 
     abstract def call(args)
@@ -31,6 +37,10 @@ module Slang
       io << @name
     end
 
+    def truthy?
+      true
+    end
+
     def call(args : List)
       @block.call args
     end
@@ -39,12 +49,18 @@ module Slang
   class List < Object
     property value : Array(Object)
 
+    delegate first, :[], :[]?, :[]=, to: @value
+
     def initialize(@value = [] of Object)
     end
 
     def <<(value : Object) : List
       @value << value
       self
+    end
+
+    def truthy?
+      !@value.empty?
     end
 
     def run(bindings)
@@ -79,6 +95,10 @@ module Slang
       io << "nil"
     end
 
+    def truthy?
+      false
+    end
+
     def self.instance
       @@instance ||= Empty.new
     end
@@ -90,12 +110,10 @@ module Slang
     def initialize(@value = {} of Object => Object)
     end
 
-    def [](k)
-      @value[k]
-    end
+    delegate :[], :[]=, to: @value
 
-    def []=(k, v)
-      @value[k] = v
+    def truthy?
+      @value.empty?
     end
 
     def to_s(io)
@@ -122,6 +140,10 @@ module Slang
       io << @value
     end
 
+    def truthy?
+      true
+    end
+
     def run(bindings)
       bindings[@value]
     end
@@ -133,6 +155,10 @@ module Slang
     def initialize(@value)
     end
 
+    def truthy?
+      value != 0
+    end
+
     def to_s(io)
       io << @value
     end
@@ -142,6 +168,10 @@ module Slang
     property value : String
 
     def initialize(@value)
+    end
+
+    def truthy?
+      true
     end
 
     def to_s(io)
@@ -156,8 +186,40 @@ module Slang
     def initialize(@value)
     end
 
+    def truthy?
+      @value != ""
+    end
+
     def to_s(io)
       io << @value
+    end
+  end
+
+  abstract class Boolean < Object
+  end
+
+  class TrueClass < Boolean
+    def truthy?
+      true
+    end
+    def to_s(io)
+      io << "true"
+    end
+
+    def self.instance
+      @@inst ||= TrueClass.new
+    end
+  end
+
+  class FalseClass < Boolean
+    def truthy?
+      false
+    end
+    def to_s(io)
+      io << "false"
+    end
+    def self.instance
+      @@inst ||= FalseClass.new
     end
   end
 end
