@@ -52,6 +52,14 @@ module Slang
     def self.unquoted
       List.new([Identifier.new("quote")] of Object)
     end
+
+    def self.do(rest)
+      arr = [Identifier.new("do")] of Object
+      rest.each do |r|
+        arr << r
+      end
+      List.new(arr)
+    end
   end
 
   class Vector < List

@@ -98,8 +98,31 @@ class Scanner
     '0' <= char <= '9'
   end
 
+  IDEN = {
+    '<',
+    '>',
+    '=',
+    '+',
+    '-',
+    '?',
+    '/',
+    '.',
+    ',',
+    '|',
+    '!',
+    '$',
+    '%',
+    '^',
+    '&',
+    '*'
+  }
+
   def is_iden_start(char)
-    'a' <= char <= 'z' || 'A' <= char <= 'Z' || char == '_'
+    'a' <= char <= 'z' || 'A' <= char <= 'Z' || char == '_' || IDEN.includes?(char)
+  end
+
+  def is_iden(char)
+    is_iden_start(char) || is_digit(char)
   end
 
   def string
@@ -121,7 +144,7 @@ class Scanner
 
   def identifier(start)
     buffer = "#{start}"
-    while char = advance_when { |char| is_iden_start(char) || is_digit(char) }
+    while char = advance_when { |char| is_iden(char) }
       buffer = buffer + char
     end
     buffer

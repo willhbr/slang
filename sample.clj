@@ -1,6 +1,6 @@
-(def func println)
+(def factorial (fn [a] (if (<= a 0)
+                   1
+                   (* a (factorial (- a 1))))))
 
-(let [foo 5]
-  (do
-    (func "Hello")
-    102))
+
+(println (factorial 5))

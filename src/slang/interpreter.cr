@@ -29,6 +29,15 @@ class Bindings
   def []=(k, v)
     @bound[k] = v
   end
+
+  def to_s(io)
+    @bound.each do |name, val|
+      io << name
+      io << ' '
+      io << val
+      io << '\n'
+    end
+  end
 end
 
 class Interpreter
@@ -63,17 +72,40 @@ class Interpreter
           raise "name must be identifier" unless name.is_a? Slang::Identifier
           return bindings.topmost[name.value] = eval(ast[2], bindings)
         when "fn"
-          return Slang::Object.nil
+          args = ast[1]
+          raise "args must be vector" unless args.is_a? Slang::Vector
+          args = args.value.map do |arg|
+            raise "Args must be identifiers" unless arg.is_a? Slang::Identifier
+            arg.as(Slang::Identifier)
+          end
+          return Slang::Function.new args, bindings, Slang::List.new(ast.data[1..-1])
         when "if"
-          return Slang::Object.nil
+          cond = eval(ast[1], bindings)
+          if cond.truthy?
+            return eval(ast[2], bindings)
+          elsif other = ast[3]?
+            return eval(other, bindings)
+          else
+            return Slang::Object.nil
+          end
         end
       end
 
       func = eval(ast.first, bindings)
 
-      raise "Can't call non-function" unless func.is_a? Slang::Fn
-
-      return func.call(ast.data)
+      if func.is_a? Slang::Function
+        binds = Bindings.new func.captured
+        ast.data.each_with_index do |arg, idx|
+          binds[func.arg_names[idx].value] = eval(arg, bindings)
+        end
+        func.body[0..-2].each do |expr|
+          eval(expr, binds)
+        end
+        return eval(func.body[-1], binds)
+      else
+        raise "Can't call non-function" unless func.is_a? Slang::Fn
+        return func.call(ast.data.map { |expr| eval(expr, bindings) })
+      end
     end
   end
 
@@ -88,7 +120,7 @@ class Interpreter
     when Slang::Map
       result = Slang::Map.new
       ast.each do |key, value|      
-        result[eval(key)] = eval(value)
+        result[eval(key, bindings)] = eval(value, bindings)
       end
       result
     when Slang::Identifier
@@ -99,5 +131,4 @@ class Interpreter
       raise "Unknown type passed to eval_node: #{ast}"
     end
   end
-
 end

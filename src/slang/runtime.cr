@@ -21,4 +21,17 @@ module Slang
       @block.call args
     end
   end
+
+  class Function < Object
+    property arg_names
+    property captured
+    property body
+
+    def initialize(@arg_names : Array(Identifier), @captured : Bindings, @body : Slang::List)
+    end
+
+    def truthy?
+      true
+    end
+  end
 end
