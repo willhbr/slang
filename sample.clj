@@ -1,1 +1,6 @@
-(if false (print 1 2 3) 2)
+(def func println)
+
+(let [foo 5]
+  (do
+    (func "Hello")
+    102))

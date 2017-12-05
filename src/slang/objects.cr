@@ -2,14 +2,6 @@ module Slang
   abstract class Object
     abstract def to_s(io)
 
-    def run(bindings)
-      self
-    end
-
-    def call(args : List)
-      raise "cannot call non-function object #{self}"
-    end
-
     abstract def truthy?
 
     def self.nil
@@ -17,39 +9,10 @@ module Slang
     end
   end
 
-  abstract class Fn < Object
-    def to_s(io)
-      io << "Function"
-    end
-
-    def truthy?
-      true
-    end
-
-    abstract def call(args)
-  end
-
-  class CrystalFn < Fn
-    def initialize(@name : String, &@block : List -> Object)
-    end
-
-    def to_s(io)
-      io << @name
-    end
-
-    def truthy?
-      true
-    end
-
-    def call(args : List)
-      @block.call args
-    end
-  end
-
   class List < Object
     property value : Array(Object)
 
-    delegate first, :[], :[]?, :[]=, to: @value
+    delegate each, each_slice, size, first, empty?, :[], :[]?, :[]=, to: @value
 
     def initialize(@value = [] of Object)
     end
@@ -63,22 +26,23 @@ module Slang
       !@value.empty?
     end
 
-    def run(bindings)
-      func = @value.first?
-      raise "No function to run in ()" unless func
-      runnable = func.run(bindings)
-      runnable.call(List.new(@value[1..-1]))
-    end
-
     def to_s(io)
       io << '('
+      body_to_s(io)
+      io << ')'
+    end
+
+    def body_to_s(io)
       first = true
       @value.each do |value|
         io << ' ' unless first
         first = false
         value.to_s io
       end
-      io << ')'
+    end
+
+    def data
+      @value[1..-1]
     end
 
     def self.quoted
@@ -87,6 +51,14 @@ module Slang
 
     def self.unquoted
       List.new([Identifier.new("quote")] of Object)
+    end
+  end
+
+  class Vector < List
+    def to_s(io)
+      io << '['
+      body_to_s(io)
+      io << ']'
     end
   end
 
@@ -110,7 +82,7 @@ module Slang
     def initialize(@value = {} of Object => Object)
     end
 
-    delegate :[], :[]=, to: @value
+    delegate :[], :[]=, :each, to: @value
 
     def truthy?
       @value.empty?
@@ -196,12 +168,16 @@ module Slang
   end
 
   abstract class Boolean < Object
+    def self.new(val)
+      val ? TrueClass.instance : FalseClass.instance
+    end
   end
 
   class TrueClass < Boolean
     def truthy?
       true
     end
+
     def to_s(io)
       io << "true"
     end

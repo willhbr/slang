@@ -48,7 +48,7 @@ class Parser
     when :"("
       list :")"
     when :"["
-      list :"]"
+      list :"]", Slang::Vector
     when :"{"
       map
     when :"'", :"`"
@@ -74,8 +74,8 @@ class Parser
     end
   end
 
-  def list(terminator)
-    into = Slang::List.new
+  def list(terminator, klass=Slang::List)
+    into = klass.new
     loop do
       sym = peek_sym?
       unless sym
@@ -125,9 +125,9 @@ class Parser
     when "nil"
       Slang::Object.nil
     when "true"
-      Slang::TrueClass.instance
+      Slang::Boolean.new true
     when "false"
-      Slang::FalseClass.instance
+      Slang::Boolean.new false
     else
       Slang::Identifier.new value
     end

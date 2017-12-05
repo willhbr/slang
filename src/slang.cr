@@ -20,9 +20,14 @@ File.open(ARGV[0]) do |file|
 
   interpreter = Interpreter.new
 
-  define_funcs(interpreter)
+  bind = Bindings.new
+  bind["println"] = Slang::CrystalFn.new "println" do |args|
+    puts args.join(" ")
+    Slang::Object.nil
+  end
+
 
   tree.value.each do |expr|
-    puts interpreter.eval expr
+    interpreter.eval(expr, bind)
   end
 end
