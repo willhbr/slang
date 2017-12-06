@@ -61,7 +61,12 @@ class Scanner
         when '`'
           yield sym(:"`")
         when '~'
-          yield sym(:"~")
+          if peek? == '@'
+            advance?
+            yield sym(:"~@")
+          else
+            yield sym(:"~")
+          end
         when '{'
           yield sym(:"{")
         when '}'

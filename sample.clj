@@ -1,6 +1,12 @@
-(def factorial (fn [a] (if (<= a 0)
-                   1
-                   (* a (factorial (- a 1))))))
+(def defn (macro [name args body]
+                 `(def ~name (fn [~@args] ~@body))))
 
+(def unless (macro [condition then]
+                   `(if ~condition nil ~then)))
 
-(println (factorial 5))
+(defn print [a]
+  [
+   (println "Butt:" a)
+   ])
+
+(print (unless false 5))

@@ -1,11 +1,27 @@
 require "./objects"
 
 module Slang
-  abstract class Fn < Object
-    abstract def call(args)
+  class Splice < Object
+    def initialize(@body : Object)
+    end
+
+    def truthy?
+      @body.truthy?
+    end
+
+    def into(outer : Slang::List)
+      b = @body
+      if b.is_a? Slang::List
+        b.each do |elem|
+          outer << elem
+        end
+      else
+        outer << b
+      end
+    end
   end
 
-  class CrystalFn < Fn
+  class CrystalFn < Object
     def initialize(@name : String, &@block : Array(Object) -> Object)
     end
 
@@ -33,5 +49,28 @@ module Slang
     def truthy?
       true
     end
+
+    def to_s(io)
+      io << '('
+      io << {{ @type.stringify }}
+      io << " ["
+      first = true
+      @arg_names.each do |arg|
+        io << ' ' unless first
+        first = false
+        arg.to_s(io)
+      end
+      io << "] "
+      @body.each do |arg|
+        arg.to_s(io)
+      end
+      if @body.empty?
+        io << "nil"
+      end
+      io << ')'
+    end
+  end
+
+  class Macro < Function
   end
 end

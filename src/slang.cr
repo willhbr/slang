@@ -70,7 +70,14 @@ File.open(ARGV[0]) do |file|
     end
   end
 
+  bind["name"] = Slang::Identifier.new "Foobar"
+  bind["args"] = Slang::Vector.new
+  bind["body"] = Slang::List.new
+
   tree.value.each do |expr|
-    interpreter.eval(expr, bind)
+    bind.compile_time = true
+    expanded = interpreter.expand_macros(expr, bind)
+    bind.compile_time = false
+    interpreter.eval(expanded, bind)
   end
 end

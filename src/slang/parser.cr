@@ -4,6 +4,7 @@ class Parser
   @finished = false
   @peeked : Token? = nil
 
+
   def initialize(&@retriever : ->Token?)
   end
 
@@ -59,6 +60,10 @@ class Parser
       o = object
       return nil unless o
       Slang::List.unquoted << o
+    when :"~@"
+      o = object
+      return nil unless o
+      Slang::List.unquote_spliced << o
     when :IDENTIFIER
       identifier(sym)
     when :NUMBER

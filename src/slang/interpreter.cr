@@ -1,11 +1,16 @@
 require "./objects"
 
 class Bindings
+  setter compile_time
   getter previous
   @previous : Bindings?
   @bound = {} of String => Slang::Object
 
-  def initialize(@previous = nil)
+  def initialize(@previous = nil, @compile_time = true)
+  end
+
+  def compile_time?
+    @compile_time
   end
 
   def topmost
@@ -26,6 +31,16 @@ class Bindings
     end
   end
 
+  def []?(k)
+    v = @bound[k]?
+    return v unless v.nil?
+    if p = @previous
+      return p[k]
+    else
+      nil
+    end
+  end
+
   def []=(k, v)
     @bound[k] = v
   end
@@ -41,7 +56,104 @@ class Bindings
 end
 
 class Interpreter
-  def eval(ast, bindings=Bindings.new)
+  def expand_with_splice_quotes(ast : Slang::List, bindings, klass)
+    res = klass.new
+    ast.each do |node|
+      expanded = expand_unquotes(node, bindings)
+      if expanded.is_a? Slang::Splice
+        expanded.into(res)
+      else
+        res << expanded
+      end
+    end
+    res
+  end
+
+  def expand_unquotes(ast, bindings)
+    case ast
+      when Slang::Vector
+        expand_with_splice_quotes(ast, bindings, Slang::Vector)
+      when Slang::List
+        if (first = ast.first) && first.is_a?(Slang::Identifier) && first.value == "unquote"
+          expand_and_eval(ast[1], bindings)
+        elsif (first = ast.first) && first.is_a?(Slang::Identifier) && first.value == "unquote-splice"
+          Slang::Splice.new eval(ast[1], bindings)
+        else
+          expand_with_splice_quotes(ast, bindings, Slang::List)
+        end
+      when Slang::Map
+        result = Slang::Map.new
+        ast.each do |k, v|
+          result[expand_and_eval(k, bindings)] = expand_and_eval(v, bindings)
+        end
+        return result
+      when Slang::Number, Slang::Str, Slang::Boolean, Slang::Atom, Slang::Empty, Slang::Identifier
+        return ast
+      else
+        raise "Can't expand quotes: #{ast}"
+    end
+  end
+
+  def expand_and_eval(ast, bindings)
+    eval(expand_macros(ast, bindings), bindings)
+  end
+
+  def expand_macros(ast, bindings)
+    case ast
+    when Slang::Vector
+      return ast.map { |a| expand_macros(a, bindings) }
+    when Slang::List
+      if (first = ast.first) && first.is_a?(Slang::Identifier)
+        case first.value
+        when "quote"
+          return ast
+        when "macro"
+          args = ast[1]
+          raise "args must be vector" unless args.is_a? Slang::Vector
+          args = args.value.map do |arg|
+            raise "Args must be identifiers" unless arg.is_a? Slang::Identifier
+            arg.as(Slang::Identifier)
+          end
+          body = Slang::List.new
+          ast[2..-1].each do |node|
+            body << expand_macros(node, bindings)
+          end
+          return Slang::Macro.new args, bindings, body
+        when "def"
+          name = ast[1]
+          raise "name must be identifier" unless name.is_a? Slang::Identifier
+          bindings.topmost[name.value] = expand_macros(ast[2], bindings)
+        else
+          if (mac = bindings[first.value]?) && mac.is_a?(Slang::Macro)
+            binds = Bindings.new mac.captured
+            ast.data.each_with_index do |arg, idx|
+              binds[mac.arg_names[idx].value] = arg
+            end
+            mac.body[0..-2].each do |expr|
+              expand_and_eval(expr, binds)
+            end
+            return eval(expand_macros(mac.body[-1], binds), binds)
+          else
+            return ast.map { |a| expand_macros(a, bindings) }
+          end
+        end
+      else
+        return ast.map { |a| expand_macros(a, bindings) }
+      end
+    when Slang::Map
+      result = Slang::Map.new
+      ast.each do |k, v|
+        result[expand_macros(k, bindings)] = expand_macros(v, bindings)
+      end
+      return result
+    when Slang::Number, Slang::Str, Slang::Boolean, Slang::Atom, Slang::Empty, Slang::Identifier
+      return ast
+    else
+      raise "Unknown expandable: #{ast}"
+    end
+  end
+
+  def eval(ast, bindings)
     loop do
       return eval_node(ast, bindings) unless ast.is_a? Slang::List
       return eval_node(ast, bindings) if ast.is_a? Slang::Vector
@@ -61,12 +173,18 @@ class Interpreter
             raise "name must be identifier, got #{name}" unless name.is_a? Slang::Identifier
             inner[name.value] = eval(value, inner)
           end
-          return eval(ast[2], inner)
+          ast = ast[2]
+          bindings = inner
+          next
         when "do"
           ast[1..-2].each do |expr|
             eval(expr, bindings)
           end
-          return eval(ast[-1], bindings)
+          ast = ast[-1]
+          next
+        when "quote"
+          raise "Cannot quote at runtime" unless bindings.compile_time?
+          return expand_unquotes ast[1], bindings
         when "def"
           name = ast[1]
           raise "name must be identifier" unless name.is_a? Slang::Identifier
@@ -103,7 +221,7 @@ class Interpreter
         end
         return eval(func.body[-1], binds)
       else
-        raise "Can't call non-function" unless func.is_a? Slang::Fn
+        raise "Can't call non-function" unless func.is_a? Slang::CrystalFn
         return func.call(ast.data.map { |expr| eval(expr, bindings) })
       end
     end
@@ -125,10 +243,8 @@ class Interpreter
       result
     when Slang::Identifier
       bindings[ast.value]
-    when Slang::Number, Slang::Str, Slang::Empty, Slang::Atom, Slang::Boolean
-      ast
     else
-      raise "Unknown type passed to eval_node: #{ast}"
+      ast
     end
   end
 end

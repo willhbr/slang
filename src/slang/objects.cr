@@ -32,6 +32,12 @@ module Slang
       io << ')'
     end
 
+    def map(&block : Object -> Object)
+      {{ @type }}.new(@value.map do |a|
+        yield(a).as(Object)
+      end)
+    end
+
     def body_to_s(io)
       first = true
       @value.each do |value|
@@ -49,8 +55,12 @@ module Slang
       List.new([Identifier.new("quote")] of Object)
     end
 
+    def self.unquote_spliced
+      List.new([Identifier.new("unquote-splice")] of Object)
+    end
+
     def self.unquoted
-      List.new([Identifier.new("quote")] of Object)
+      List.new([Identifier.new("unquote")] of Object)
     end
 
     def self.do(rest)
