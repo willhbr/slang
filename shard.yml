@@ -5,8 +5,8 @@ authors:
   - Will Richardson <william.hamish@gmail.com>
 
 targets:
-  slang:
-    main: src/slang.cr
+  slg:
+    main: src/cli.cr
 
 crystal: 0.23.1
 

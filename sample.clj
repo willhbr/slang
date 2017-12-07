@@ -6,7 +6,7 @@
 
 (defn print [a]
   [
-   (raise "oh shit")
+   (println a)
    ])
 
 (let [foo 6]
