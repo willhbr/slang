@@ -4,8 +4,12 @@ module Slang
   # TODO Put your code here
 end
 
-File.open(ARGV[0]) do |file|
-  sc = Scanner.new file
+macro error!(message)
+  next {Slang::Object.nil, Slang::Error.new({{ message }}, 0, "")}
+end
+
+begin
+  sc = Scanner.new ARGV[0]
   tokens = [] of Token
   sc.each_token do |token|
     tokens.push token
@@ -21,20 +25,23 @@ File.open(ARGV[0]) do |file|
   interpreter = Interpreter.new
 
   bind = Bindings.new
+  bind["raise"] = Slang::CrystalFn.new "raise" do |args|
+    error! args.first.to_s
+  end
   bind["println"] = Slang::CrystalFn.new "println" do |args|
     puts args.join(" ")
-    Slang::Object.nil
+    no_error! Slang::Object.nil
   end
 
   bind["<="] = Slang::CrystalFn.new "<=" do |args|
     a = args[0]
     b = args[1]
     if a.is_a?(Slang::Number) && b.is_a?(Slang::Number)
-      Slang::Boolean.new a.value <= b.value
+      no_error! Slang::Boolean.new a.value <= b.value
     elsif a.is_a?(Slang::Str) && b.is_a?(Slang::Str)
-      Slang::Boolean.new a.value <= b.value
+      no_error! Slang::Boolean.new a.value <= b.value
     else
-      raise "Can't compare that business"
+      error! "Can't compare that business"
     end
   end
 
@@ -42,11 +49,11 @@ File.open(ARGV[0]) do |file|
     a = args[0]
     b = args[1]
     if a.is_a?(Slang::Number) && b.is_a?(Slang::Number)
-      Slang::Number.new a.value + b.value
+      no_error! Slang::Number.new a.value + b.value
     elsif a.is_a?(Slang::Str) && b.is_a?(Slang::Str)
-      Slang::Str.new a.value + b.value
+      no_error! Slang::Str.new a.value + b.value
     else
-      raise "Can't add that business"
+      error! "Can't add that business"
     end
   end
 
@@ -54,9 +61,9 @@ File.open(ARGV[0]) do |file|
     a = args[0]
     b = args[1]
     if a.is_a?(Slang::Number) && b.is_a?(Slang::Number)
-      Slang::Number.new a.value - b.value
+      no_error! Slang::Number.new a.value - b.value
     else
-      raise "Can't subtract that business"
+      error! "Can't subtract that business"
     end
   end
 
@@ -64,20 +71,28 @@ File.open(ARGV[0]) do |file|
     a = args[0]
     b = args[1]
     if a.is_a?(Slang::Number) && b.is_a?(Slang::Number)
-      Slang::Number.new a.value * b.value
+      no_error! Slang::Number.new a.value * b.value
     else
-      raise "Can't multiply that business"
+      error! "Can't multiply that business"
     end
   end
 
-  bind["name"] = Slang::Identifier.new "Foobar"
-  bind["args"] = Slang::Vector.new
-  bind["body"] = Slang::List.new
-
   tree.value.each do |expr|
     bind.compile_time = true
-    expanded = interpreter.expand_macros(expr, bind)
+    expanded, err = interpreter.expand_macros(expr, bind)
+    if err
+      puts err
+      break
+    end
     bind.compile_time = false
-    interpreter.eval(expanded, bind)
+    res, err = interpreter.eval(expanded, bind)
+    if err
+      puts err
+      break
+    end
   end
+rescue sc : CompileError
+  puts sc
+  puts sc.inspect_with_backtrace
+  exit 65
 end

@@ -6,7 +6,9 @@
 
 (defn print [a]
   [
-   (println "Butt:" a)
+   (raise "oh shit")
    ])
 
-(print (unless false 5))
+(let [foo 6]
+  (print (unless false foo)))
+

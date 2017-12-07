@@ -47,11 +47,11 @@ class Parser
     return nil unless sym
     case sym.type
     when :"("
-      list :")"
+      list sym, :")"
     when :"["
-      list :"]", Slang::Vector
+      list sym, :"]", Slang::Vector
     when :"{"
-      map
+      map(sym)
     when :"'", :"`"
       o = object
       return nil unless o
@@ -75,19 +75,19 @@ class Parser
     when :EOF
       nil
     else
-      sym.raise_here "Syntax error: unexpected #{sym.type} '#{sym.value}'"
+      sym.parse_error "Syntax error: unexpected #{sym.type} '#{sym.value}'"
     end
   end
 
-  def list(terminator, klass=Slang::List)
+  def list(start, terminator, klass=Slang::List)
     into = klass.new
     loop do
       sym = peek_sym?
       unless sym
-        sym.raise_here "Unexpected EOF"
+        start.parse_error "Unexpected EOF"
       end
       if sym && sym.type == :EOF
-        sym.raise_here "Unexpected EOF"
+        sym.parse_error "Unexpected EOF"
       end
       break if sym.type == terminator
 
@@ -101,20 +101,20 @@ class Parser
     into
   end
 
-  def map
+  def map(start)
     into = Slang::Map.new
     loop do
       key = peek_sym?
-      key.raise_here "Unexpected EOF" unless key
-      key.raise_here "Unexpected EOF" if key && key.type == :EOF
+      start.parse_error "Unexpected EOF" unless key
+      key.parse_error "Unexpected EOF" if key && key.type == :EOF
       break if key.type == :"}"
       key_obj = object()
       raise "Unexpected EOF" unless key_obj
 
       value = peek_sym?
-      value.raise_here "Unexpected EOF" unless value
-      value.raise_here "Unexpected EOF" if value && value.type == :EOF
-      key.raise_here "Map literals must have an even number of elements" if key.type == :"}"
+      start.parse_error "Unexpected EOF" unless value
+      value.parse_error "Unexpected EOF" if value && value.type == :EOF
+      key.parse_error "Map literals must have an even number of elements" if key.type == :"}"
       value_obj = object()
       raise "Unexpected EOF" unless value_obj
 

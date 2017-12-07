@@ -216,4 +216,17 @@ module Slang
       @@inst ||= FalseClass.new
     end
   end
+
+  class Error < Object
+    def initialize(@message : String, @index : Int32, @file : String)
+    end
+
+    def truthy?
+      true
+    end
+
+    def to_s(io)
+      io << @message
+    end
+  end
 end

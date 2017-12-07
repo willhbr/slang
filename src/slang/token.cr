@@ -1,18 +1,14 @@
 class Token
-  getter line : Int32
-  getter column : Int32
   getter type : Symbol
   getter value : String | Int32 | Nil
+  getter index : Int32
+  getter path : String
 
-  def initialize(@line, @column, @type, @value)
+  def initialize(@index, @path, @type, @value)
   end
 
-  def raise_here(message)
-    raise "#{location} #{message}"
-  end
-
-  def location
-    "#{line}:#{column}"
+  def parse_error(message)
+    raise ParseError.new message, @index, @path
   end
 
   def to_s(io)
@@ -21,11 +17,5 @@ class Token
     else
       io << value
     end
-  end
-end
-
-struct Nil
-  def raise_here(message)
-    raise message
   end
 end

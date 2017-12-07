@@ -2,27 +2,21 @@ require "./token"
 
 class Scanner
   @index = 0
-  @line = 1
-  @column = 1
-  @input : IO
   @peeked : Char? = nil
 
-  def initialize(@input)
-  end
-
-  def self.new(input : String)
-    new IO::Memory.new(input.to_slice)
+  def initialize(@file_path : String)
+    @input = File.open(@file_path)
   end
 
   def advance?
-    @index += 1
-    @column += 1
     if peeked = @peeked
       @peeked = nil
+      @index += 1
       return peeked
     end
     char = @input.read_char
     return nil unless char
+    @index += 1
     char
   end
 
@@ -74,11 +68,7 @@ class Scanner
         when ':'
           iden = identifier("")
           yield sym(:ATOM, iden)
-        when ' ', '\t'
-          next
-        when '\n'
-          @line += 1
-          @column = 1
+        when ' ', '\t', '\n'
           next
         when '"'
           yield sym(:STRING, string)
@@ -86,9 +76,14 @@ class Scanner
           if is_digit(char)
             yield sym(:NUMBER, number(char))
           elsif is_iden_start(char)
-            yield sym(:IDENTIFIER, identifier(char))
+            val = identifier(char)
+            if val.ends_with? ':'
+              yield sym(:ATOM, val[0..-2])
+            else
+              yield sym(:IDENTIFIER, val)
+            end
           else
-            raise "Invalid character on line #{@line}: '#{char}' (#{char.ord})"
+            raise ParseError.new("Invalid character #{char} ", @index, @file_path)
           end
       end
     end
@@ -96,7 +91,7 @@ class Scanner
   end
 
   def sym(type, value=nil)
-    Token.new @line, @column, type, value
+    Token.new @index, @file_path, type, value
   end
 
   def is_digit(char)
@@ -119,7 +114,8 @@ class Scanner
     '%',
     '^',
     '&',
-    '*'
+    '*',
+    ':'
   }
 
   def is_iden_start(char)

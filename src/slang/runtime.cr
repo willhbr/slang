@@ -22,7 +22,7 @@ module Slang
   end
 
   class CrystalFn < Object
-    def initialize(@name : String, &@block : Array(Object) -> Object)
+    def initialize(@name : String, &@block : Array(Object) -> Result)
     end
 
     def to_s(io)
@@ -73,4 +73,25 @@ module Slang
 
   class Macro < Function
   end
+  alias Result = {Slang::Object, Slang::Error?}
+end
+
+macro try!(call)
+  if %res = {{ call }}
+    %value, %error = %res
+    if %error != nil
+      return {Slang::Object.nil, %error}
+    end
+    %value
+  else
+    raise "This should not happen"
+  end
+end
+
+macro no_error!(call)
+  { {{ call }}, nil}
+end
+
+macro error!(message)
+  return {Slang::Object.nil, Slang::Error.new({{ message }}, 0, "")}
 end
