@@ -37,6 +37,14 @@ class Scanner
     end
   end
 
+  def tokens
+    toks = [] of Token
+    each_token do |tok|
+      toks << tok
+    end
+    toks
+  end
+
   def each_token(&block)
     loop do
       char = advance?

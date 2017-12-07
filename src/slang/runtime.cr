@@ -40,10 +40,12 @@ module Slang
 
   class Function < Object
     property arg_names
+    property splat_name
     property captured
     property body
 
-    def initialize(@arg_names : Array(Identifier), @captured : Bindings, @body : Slang::List)
+    def initialize(@arg_names : Array(Identifier), @captured : Bindings,
+                   @body : Slang::List, @splat_name : Identifier? = nil)
     end
 
     def truthy?
@@ -93,5 +95,5 @@ macro no_error!(call)
 end
 
 macro error!(message)
-  return {Slang::Object.nil, Slang::Error.new({{ message }}, 0, "")}
+  {Slang::Object.nil, Slang::Error.new({{ message }}, 0, "")}
 end

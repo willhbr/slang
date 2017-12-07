@@ -1,21 +1,16 @@
-(def defn (macro [name args body]
+(def defn (macro [name args & body]
                  `(def ~name (fn [~@args] ~@body))))
 
-(def unless (macro [condition then]
-                   `(if ~condition nil ~then)))
 
-(defn loop [times func]
-  [(func)
-   (if (<= times 0)
-     nil
-     (loop (- times 1) func))])
+(defn dec [a] (- a 1))
 
-(defn doop-things [arg]
-  (
-   (+ 1 arg)
-   ))
+(defn loop [i func]
+  (func)
+  (if (<= i 0)
+    nil
+    (loop (dec i) func)))
 
-(loop 500 (fn [] (println "Hello")))
 
-(println (doop-things 5))
+(defn print-butts [] (println "butts"))
 
+(loop 500 print-butts)

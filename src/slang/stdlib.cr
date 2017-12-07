@@ -1,6 +1,15 @@
 require "./objects"
 
 class Lib::Runtime
+  macro func(bind, name, &body)
+    {% if name.is_a? SymbolLiteral %}
+      name = {{ name }}.to_s
+    {% else %}
+      name = {{ name.stringify }}
+    {% end %}
+    {{bind}}[name] = Slang::CrystalFn.new name {{ body }}
+  end
+
   def self.new
     bind = Bindings.new
     bind["raise"] = Slang::CrystalFn.new "raise" do |args|
@@ -11,7 +20,21 @@ class Lib::Runtime
       no_error! Slang::Object.nil
     end
 
-    bind["<="] = Slang::CrystalFn.new "<=" do |args|
+    func(bind, first) do |args|
+      a = args[0]
+      next error! "Can't get first of non-list" unless a.is_a? Slang::List
+      next no_error!(Slang::Object.nil) if a.empty?
+      no_error! a.first
+    end
+
+    func(bind, rest) do |args|
+      a = args[0]
+      next error! "Can't get rest of non-list" unless a.is_a? Slang::List
+      next no_error!(a) if a.empty?
+      no_error! Slang::List.new(a.data)
+    end
+
+    func(bind, :<=) do |args|
       a = args[0]
       b = args[1]
       if a.is_a?(Slang::Number) && b.is_a?(Slang::Number)
@@ -19,7 +42,7 @@ class Lib::Runtime
       elsif a.is_a?(Slang::Str) && b.is_a?(Slang::Str)
         no_error! Slang::Boolean.new a.value <= b.value
       else
-        error! "Can't compare that business"
+        next error! "Can't compare that business"
       end
     end
 
@@ -31,7 +54,7 @@ class Lib::Runtime
       elsif a.is_a?(Slang::Str) && b.is_a?(Slang::Str)
         no_error! Slang::Str.new a.value + b.value
       else
-        error! "Can't add that business"
+       next error! "Can't add that business"
       end
     end
 
@@ -41,7 +64,7 @@ class Lib::Runtime
       if a.is_a?(Slang::Number) && b.is_a?(Slang::Number)
         no_error! Slang::Number.new a.value - b.value
       else
-        error! "Can't subtract that business"
+        next error! "Can't subtract that business"
       end
     end
 
