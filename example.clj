@@ -31,6 +31,19 @@
 
 ; will call the w macro (it must be currently loaded)
 #re/foo|bar/
+;=> (re "foo|bar")
+
+#nme(Will Richardson)
+#nme(Sarang Love Leehan)
+
+#(func 1 2 3)
+
+foobar
+
+/.*?/
+
+%foobar
+;=> (gensym foobar)
 
 (defmacro w [input]
   `~(String.split input " "))
@@ -38,6 +51,7 @@
 ; TODO which separators are allowed?
 #w<word word word word>
 ;=> ["word" "word" "word" "word"]
+
 
 ; For shortcut functions?
 $(things %1)

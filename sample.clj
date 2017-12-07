@@ -4,11 +4,18 @@
 (def unless (macro [condition then]
                    `(if ~condition nil ~then)))
 
-(defn print [a]
-  [
-   (println a)
-   ])
+(defn loop [times func]
+  [(func)
+   (if (<= times 0)
+     nil
+     (loop (- times 1) func))])
 
-(let [foo 6]
-  (print (unless false foo)))
+(defn doop-things [arg]
+  (
+   (+ 1 arg)
+   ))
+
+(loop 500 (fn [] (println "Hello")))
+
+(println (doop-things 5))
 
