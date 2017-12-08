@@ -12,10 +12,11 @@ class Lib::Runtime
 
   def self.new
     bind = Bindings.new
-    bind["raise"] = Slang::CrystalFn.new "raise" do |args|
+    func(bind, raise) do |args|
       error! args.first.to_s
     end
-    bind["println"] = Slang::CrystalFn.new "println" do |args|
+        
+    func(bind, println) do |args|
       puts args.join(" ")
       no_error! Slang::Object.nil
     end
@@ -46,7 +47,7 @@ class Lib::Runtime
       end
     end
 
-    bind["+"] = Slang::CrystalFn.new "+" do |args|
+    func(bind, :+) do |args|
       a = args[0]
       b = args[1]
       if a.is_a?(Slang::Number) && b.is_a?(Slang::Number)
@@ -58,7 +59,7 @@ class Lib::Runtime
       end
     end
 
-    bind["-"] = Slang::CrystalFn.new "-" do |args|
+    func(bind, :-) do |args|
       a = args[0]
       b = args[1]
       if a.is_a?(Slang::Number) && b.is_a?(Slang::Number)
@@ -68,7 +69,7 @@ class Lib::Runtime
       end
     end
 
-    bind["*"] = Slang::CrystalFn.new "*" do |args|
+    func(bind, :*) do |args|
       a = args[0]
       b = args[1]
       if a.is_a?(Slang::Number) && b.is_a?(Slang::Number)
