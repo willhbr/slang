@@ -10,7 +10,10 @@
     nil
     (loop (dec i) func)))
 
+(def foo (macro [& a] [~@a]))
 
 (defn print-butts [] (println "butts"))
 
-(loop 500 print-butts)
+(println (foo 5 4 5 6))
+
+(print-butts )

@@ -9,8 +9,6 @@ class Runner
     @compile_time = Lib::CompileTime.new
   end
 
-  @interpreter = Interpreter.new
-
   def read(file)
     toks = Scanner.new(file).tokens
     i = -1
@@ -24,7 +22,8 @@ class Runner
   def compile(program)
     res = [] of Slang::Object
     program.each do |expr|
-      val, err = @interpreter.expand_macros(expr, @compile_time)
+      val, err = Interpreter.expand_macros(expr, @compile_time)
+      puts val
       if err
         puts err
         return
@@ -38,7 +37,7 @@ class Runner
     return unless program
     res = Slang::Object.nil
     program.each do |expr|
-      res, err = @interpreter.eval(expr, @compile_time)
+      res, err = Interpreter.eval(expr, @runtime, false)
       if err
         puts err
         return
