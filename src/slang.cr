@@ -23,7 +23,6 @@ class Runner
     res = [] of Slang::Object
     program.each do |expr|
       val, err = Interpreter.expand_macros(expr, @compile_time)
-      puts val
       if err
         raise err.to_s
         return

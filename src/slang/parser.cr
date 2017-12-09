@@ -79,7 +79,7 @@ class Parser
     end
   end
 
-  def list(start, terminator, klass)
+  def list(start, terminator, klass) : Slang::Object
     into = Array(Slang::Object).new
     loop do
       sym = peek_sym?

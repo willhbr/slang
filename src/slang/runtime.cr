@@ -17,5 +17,6 @@ macro no_error!(call)
 end
 
 macro error!(message)
+  raise {{ message.stringify }}
   {nil, Slang::Error.new({{ message }}, 0, "")}
 end

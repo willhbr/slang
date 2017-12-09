@@ -52,6 +52,9 @@ class Bindings
       io << val
       io << '\n'
     end
+    if prev = @previous
+      prev.to_s io
+    end
   end
 end
 
@@ -137,7 +140,7 @@ class Interpreter
           raise "name must be identifier" unless name.is_a? Slang::Identifier
           result = try! expand_macros(ast[2], bindings) 
           bindings.topmost[name.value] = result
-          exp = Slang::List.from(Slang::Identifier.new("def"), name, result)
+          exp = Slang::List.create(Slang::Identifier.new("def"), name, result)
           return no_error! exp
         else
           if (mac = bindings[first.value]?) && mac.is_a?(Slang::Macro)
@@ -257,7 +260,7 @@ class Interpreter
             end
             arguments << arg
           end
-          return no_error! Slang::Function.new(arguments, bindings, Slang::List.create(ast.data.data), splat_arg)
+          return no_error! Slang::Function.new(arguments, bindings, ast.data.data, splat_arg)
         when "if"
           cond = try! eval(ast[1], bindings, in_macro)
           if truthy? cond
@@ -269,7 +272,6 @@ class Interpreter
           end
         end
       end
-
 
       func = try! eval(ast.first, bindings, in_macro)
 

@@ -25,64 +25,119 @@ module Slang
     end
   end
 
-  abstract class List
-    def self.create(value, n=EmptyList.instance)
-      Node.new(value, n)
+  class List
+    property head : Node? = nil
+    property tail : Node? = nil
+
+    def initialize(eachable)
+      return if eachable.empty?
+      current = Node.new eachable.first
+      @head = current
+      first = true
+      eachable.each do |item|
+        if first
+          first = false
+          next
+        end
+        node = Node.new item
+        current.rest = node
+        current = node
+      end
     end
 
-    def self.from(*vals : Object)
-      tail = EmptyList.instance
-      vals.reverse.each do |val|
-        tail = List.create val, tail
-      end
-      tail
+    def self.from(eachable)
+      new eachable
     end
 
-    def self.from(vals : Array(Object))
-      tail = EmptyList.instance
-      vals.reverse.each do |val|
-        tail = List.create val, tail
+    def self.create(*eachable)
+      new eachable
+    end
+
+    def initialize
+    end
+
+    def initialize(node : Node?, tail : Node?)
+      @head = node
+      @tail = tail
+    end
+
+    def self.create(value)
+      n = Node.new(value)
+      List.new n, n
+    end
+
+    def empty?
+      @head.nil?
+    end
+
+    def first
+      if h = @head
+        h.value
+      else
+        raise "Can't first empty list"
       end
-      tail
+    end
+
+    def data
+      if h = @head
+        List.new h.rest, @tail.as(Node)
+      else
+        List.new
+      end
     end
 
     def each(&block)
-      current = self
-      while current.is_a? Node
+      current = @head
+      while current
         yield current.value
         current = current.rest
       end
     end
 
     def each_but_last
-      current = self
-      return if current.is_a? EmptyList
-      while (r = current.rest) && !r.is_a?(EmptyList)
+      current = @head
+      return unless current
+      while (r = current.rest) && r != @tail
         yield current.value
         current = r
       end
     end
 
-    def last
-      current = self
-      raise "Can't last empty list" if current.is_a? EmptyList
-      while !current.rest.is_a? EmptyList
-        current = current.rest
+    def rest
+      if h = @head
+        List.new h.rest, @tail
+      else
+        List.new
       end
-      current
+    end
+
+    def last
+      if l = @tail
+        l.value
+      else
+        raise "can't last empty list"
+      end
+    end
+
+    def conj(value)
+      node = Node.new value
+      if t = @tail
+        t.rest = node
+        @tail = node
+      else
+        @tail = @head = node
+      end
     end
 
     def map(&block)
-      return if empty?
-      head = List.create(yield first)
-      current = head
-      rest.each do |item|
-        value = yield item
-        node = List.create(value)
-        current.rest = node
-        current = node
+      current = @head
+      return unless current
+      list = List.new
+      while current
+        list.conj yield current.value
+        current = current.rest
       end
-      head
+      list
     end
 
     def map_to_arr(&block)
@@ -93,123 +148,73 @@ module Slang
       res
     end
 
-    abstract def to_s(io)
+    def []?(idx)
+      current = @head
+      while current
+        if idx == 0
+          return current.value
+        end
+        idx -= 1
+        current = current.rest
+      end
+      nil
+    end
 
-    abstract def [](idx)
+    def [](idx)
+      current = @head
+      while current
+        if idx == 0
+          return current.value
+        end
+        idx -= 1
+        current = current.rest
+      end
+      raise "Index out of range"
+    end
+
+    def from(idx)
+      current = @head
+      while current
+        if idx == 0
+          return List.new current, @tail
+        end
+        idx -= 1
+        current = current.rest
+      end
+      List.new
+    end
+
+    def to_s(io)
+      current = @head
+      io << '('
+      while current
+        io << ' ' unless current === @head
+        current.value.to_s io
+        current = current.rest
+      end
+      io << ')'
+    end
 
     def self.quoted(rest)
-      Node.new(Identifier.new("quote"), Node.new(rest))
+      create(Identifier.new("quote"), rest)
     end
-
     def self.unquote_spliced(rest)
-      Node.new(Identifier.new("unquote-splice"), Node.new(rest))
+      create(Identifier.new("unquote-splice"), rest)
     end
-
     def self.unquoted(rest)
-      Node.new(Identifier.new("unquote"), Node.new(rest))
+      create(Identifier.new("unquote"), rest)
     end
-
     def self.do(rest : Array(Object))
       tail = from(rest)
       create(Identifier.new("do"), tail)
     end
   end
 
-  class Node < List
+  class Node
     property value : Object
-    @rest : List = EmptyList.instance
-    property rest
+    property rest : Node?
 
-    def initialize(@value, @rest = EmptyList.instance)
-    end
-
-    def empty?
-      false
-    end
-
-    def first
-      @value
-    end
-
-    def data
-      @rest
-    end
-
-    def [](idx)
-      if idx == 0
-        return @value
-      else
-        return @rest[idx - 1]
-      end
-    end
-
-    def []?(idx)
-      if idx == 0
-        return @value
-      else
-        return @rest[idx - 1]?
-      end
-    end
-
-    def from(idx)
-      if idx == 0
-        self
-      else
-        @rest.from(idx - 1)
-      end
-    end
-
-    def to_s(io)
-      current = self
-      io << '('
-      while current.is_a? Node
-        io << ' ' unless current === self
-        current.value.to_s io
-        current = current.rest
-      end
-      io << ')'
-    end
-  end
-
-  class EmptyList < List
-    def self.instance
-      @@inst ||= EmptyList.new
-    end
-
-    def to_s(io)
-      io << "()"
-    end
-
-    def rest
-      self
-    end
-
-    def empty?
-      true
-    end
-
-    def first
-      raise "Can't first an empty list"
-    end
-
-    def value
-      raise "Can't get value from empty list"
-    end
-
-    def data
-      self
-    end
-    
-    def [](idx)
-      raise "can't index empty list"
-    end
-
-    def []?(idx)
-      nil
-    end
-
-    def from(_idx)
-      self
+    def initialize(@value, @rest = nil)
     end
   end
 
