@@ -4,6 +4,10 @@ version: 0.1.0
 authors:
   - Will Richardson <william.hamish@gmail.com>
 
+dependencies:
+  immutable:
+    github: javanut13/immutable
+
 targets:
   slg:
     main: src/cli.cr

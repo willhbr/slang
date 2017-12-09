@@ -25,7 +25,7 @@ class Runner
       val, err = Interpreter.expand_macros(expr, @compile_time)
       puts val
       if err
-        puts err
+        raise err.to_s
         return
       end
       res << val
@@ -35,11 +35,11 @@ class Runner
 
   def execute(program)
     return unless program
-    res = Slang::Object.nil
+    res = nil
     program.each do |expr|
       res, err = Interpreter.eval(expr, @runtime, false)
       if err
-        puts err
+        raise err.to_s
         return
       end
     end

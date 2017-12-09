@@ -56,17 +56,17 @@ class Bindings
 end
 
 class Interpreter
-  def self.expand_with_splice_quotes(ast : Slang::List, bindings, klass, in_macro) : Slang::Result
-    res = klass.new
+  def self.expand_with_splice_quotes(ast, bindings, klass, in_macro) : Slang::Result
+    res = Array(Slang::Object).new
     ast.each do |node|
       expanded = try! expand_unquotes(node, bindings, in_macro)
       if expanded.is_a? Slang::Splice
-        expanded.into(res)
+        expanded.into res
       else
         res << expanded
       end
     end
-    no_error! res
+    no_error! klass.from res
   end
 
   def self.expand_unquotes(ast : Slang::Object, bindings, in_macro) : Slang::Result
@@ -83,15 +83,13 @@ class Interpreter
         expand_with_splice_quotes(ast, bindings, Slang::List, in_macro)
       end
     when Slang::Map
-      result = Slang::Map.new
+      result = Hash(Slang::Object, Slang::Object).new
       ast.each do |k, v|
         result[try! expand_and_eval(k, bindings, in_macro)] = try! expand_and_eval(v, bindings, in_macro)
       end
-      return no_error! result
-    when Slang::Number, Slang::Str, Slang::Boolean, Slang::Atom, Slang::Empty, Slang::Identifier
-      return no_error! ast
+      return no_error! Slang::Map.new result
     else
-      raise "Can't expand quotes: #{ast}"
+      no_error! ast
     end
   end
 
@@ -102,7 +100,10 @@ class Interpreter
   def self.expand_macros(ast, bindings) : Slang::Result
     case ast
     when Slang::Vector
-      return no_error! ast.map { |a| try! expand_macros(a, bindings) }
+      ast.each_with_index do |node, idx|
+        ast = ast.set(idx, try! expand_macros(node, bindings))
+      end
+      return no_error! ast
     when Slang::List
       if (first = ast.first) && first.is_a?(Slang::Identifier)
         case first.value
@@ -114,7 +115,7 @@ class Interpreter
           arguments = Array(Slang::Identifier).new
           splat_started = false
           splat_arg = nil
-          args.value.each do |arg|
+          args.each do |arg|
             return error! "Args must be identifiers" unless arg.is_a? Slang::Identifier
             if arg.value == "&"
               splat_started = true
@@ -126,20 +127,17 @@ class Interpreter
             end
             arguments << arg
           end
-          body = Slang::List.new
-          ast[2..-1].each do |node|
+          body = Array(Slang::Object).new
+          ast.from(2).each do |node|
             body << try! expand_macros(node, bindings)
           end
-          return no_error! Slang::Macro.new(arguments, bindings, body, splat_arg)
+          return no_error! Slang::Macro.new(arguments, bindings, Slang::List.from(body), splat_arg)
         when "def"
           name = ast[1]
           raise "name must be identifier" unless name.is_a? Slang::Identifier
           result = try! expand_macros(ast[2], bindings) 
           bindings.topmost[name.value] = result
-          exp = Slang::List.new
-          exp << Slang::Identifier.new "def"
-          exp << name
-          exp << result
+          exp = Slang::List.from(Slang::Identifier.new("def"), name, result)
           return no_error! exp
         else
           if (mac = bindings[first.value]?) && mac.is_a?(Slang::Macro)
@@ -150,20 +148,20 @@ class Interpreter
             end
 
             if splat = mac.splat_name
-              rest = Slang::Vector.new
-              values[mac.arg_names.size..-1].each do |arg|
+              rest = Array(Slang::Object).new
+              values.from(mac.arg_names.size).each do |arg|
                 rest << arg
               end
-              binds[splat.value] = rest
+              binds[splat.value] = Slang::Vector.from(rest)
             end
 
-            mac.body[0..-2].each do |expr|
+            mac.body.each_but_last do |expr|
               try! expand_and_eval(expr, binds, true)
             end
             if mac.body.empty?
-              return no_error! Slang::Object.nil
+              return no_error! nil
             else
-              macro_result = try! expand_and_eval(mac.body[-1], binds, true)
+              macro_result = try! expand_and_eval(mac.body.last, binds, true)
               return expand_macros(macro_result, bindings)
             end
           else
@@ -174,16 +172,20 @@ class Interpreter
         return no_error! ast.map { |a| try! expand_macros(a, bindings) }
       end
     when Slang::Map
-      result = Slang::Map.new
+      result = Hash(Slang::Object, Slang::Object).new
       ast.each do |k, v|
         result[try! expand_macros(k, bindings)] = try! expand_macros(v, bindings)
       end
-      return no_error! result
-    when Slang::Number, Slang::Str, Slang::Boolean, Slang::Atom, Slang::Empty, Slang::Identifier
-      return no_error! ast
+      return no_error! Slang::Map.new result
+    when Slang::Wrapper
+      return no_error! ast.value
     else
-      raise "Unknown expandable: #{ast}"
+      no_error! ast
     end
+  end
+
+  def self.truthy?(value)
+    value != nil
   end
 
   def self.eval(ast : Slang::Object, bindings, in_macro) : Slang::Result
@@ -207,16 +209,16 @@ class Interpreter
             inner[name.value] = try! eval(value, inner, in_macro)
           end
           bindings = inner
-          ast[2..-2].each do |expr|
+          ast.rest.each_but_last do |expr|
             try! eval(expr, bindings, in_macro)
           end
-          ast = ast[-1]
+          ast = ast.last
           next
         when "do"
-          ast[1..-2].each do |expr|
+          ast.each_but_last do |expr|
             try! eval(expr, bindings, in_macro)
           end
-          ast = ast[-1]
+          ast = ast.last
           next
 
         # I really don't know about these...
@@ -243,7 +245,7 @@ class Interpreter
           arguments = Array(Slang::Identifier).new
           splat_started = false
           splat_arg = nil
-          args.value.each do |arg|
+          args.each do |arg|
             return error! "Args must be identifiers" unless arg.is_a? Slang::Identifier
             if arg.value == "&"
               splat_started = true
@@ -255,18 +257,19 @@ class Interpreter
             end
             arguments << arg
           end
-          return no_error! Slang::Function.new(arguments, bindings, Slang::List.new(ast.data[1..-1]), splat_arg)
+          return no_error! Slang::Function.new(arguments, bindings, Slang::List.create(ast.data.data), splat_arg)
         when "if"
           cond = try! eval(ast[1], bindings, in_macro)
-          if cond.truthy?
+          if truthy? cond
             return eval(ast[2], bindings, in_macro)
           elsif other = ast[3]?
             return eval(other, bindings, in_macro)
           else
-            return no_error! Slang::Object.nil
+            return no_error! nil
           end
         end
       end
+
 
       func = try! eval(ast.first, bindings, in_macro)
 
@@ -279,24 +282,24 @@ class Interpreter
         end
 
         if splat = func.splat_name
-          rest = Slang::Vector.new
-          values[func.arg_names.size..-1].each do |arg|
-            rest << try! eval(arg, bindings, in_macro)
+          rest = Array(Slang::Object).new
+          values.from(func.arg_names.size).each do |arg|
+            rest.push(try! eval(arg, bindings, in_macro))
           end
-          binds[splat.value] = rest
+          binds[splat.value] = Slang::Vector.from(rest)
         end
 
-        func.body[0..-2].each do |expr|
+        func.body.each_but_last do |expr|
           try! eval(expr, binds, in_macro)
         end
         if func.body.empty?
-          return no_error! Slang::Object.nil
+          return no_error! nil
         else
-          return eval(func.body[-1], binds, in_macro)
+          return eval(func.body.last, binds, in_macro)
         end
       else
         return error! "Can't call non-function" unless func.is_a? Slang::CrystalFn
-        return func.call(ast.data.map { |expr| try! eval(expr, bindings, in_macro) })
+        return func.call(ast.data.map_to_arr { |expr| try! eval(expr, bindings, in_macro) })
       end
     end
   end
@@ -306,11 +309,11 @@ class Interpreter
     when Slang::Vector
       expand_with_splice_quotes(ast, bindings, Slang::Vector, in_macro)
     when Slang::Map
-      result = Slang::Map.new
+      result = Hash(Slang::Object, Slang::Object).new
       ast.each do |key, value|      
         result[try! eval(key, bindings, in_macro)] = try! eval(value, bindings, in_macro)
       end
-      no_error! result
+      no_error! Slang::Map.new(result)
     when Slang::Identifier
       no_error! bindings[ast.value]
     else

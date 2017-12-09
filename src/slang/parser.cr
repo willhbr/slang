@@ -33,7 +33,7 @@ class Parser
   end
 
   def parse
-    program = Slang::List.new
+    program = Array(Slang::Object).new
     loop do
       obj = object()
       break unless obj
@@ -47,7 +47,7 @@ class Parser
     return nil unless sym
     case sym.type
     when :"("
-      list sym, :")"
+      list sym, :")", Slang::List
     when :"["
       list sym, :"]", Slang::Vector
     when :"{"
@@ -55,15 +55,15 @@ class Parser
     when :"'", :"`"
       o = object
       return nil unless o
-      Slang::List.quoted << o
+      Slang::List.quoted o
     when :"~"
       o = object
       return nil unless o
-      Slang::List.unquoted << o
+      Slang::List.unquoted o
     when :"~@"
       o = object
       return nil unless o
-      Slang::List.unquote_spliced << o
+      Slang::List.unquote_spliced o
     when :IDENTIFIER
       identifier(sym)
     when :NUMBER
@@ -79,8 +79,8 @@ class Parser
     end
   end
 
-  def list(start, terminator, klass=Slang::List)
-    into = klass.new
+  def list(start, terminator, klass)
+    into = Array(Slang::Object).new
     loop do
       sym = peek_sym?
       unless sym
@@ -98,11 +98,11 @@ class Parser
       into << value
     end
     pop_sym? # Get rid of terminator
-    into
+    klass.from into
   end
 
   def map(start)
-    into = Slang::Map.new
+    into = Hash(Slang::Object, Slang::Object).new
     loop do
       key = peek_sym?
       start.parse_error "Unexpected EOF" unless key
@@ -121,29 +121,29 @@ class Parser
       into[key_obj] = value_obj
     end
     pop_sym?
-    into
+    Slang::Map.new into
   end
 
   def identifier(token)
     value = token.value.as(String)
     case value
     when "nil"
-      Slang::Object.nil
+      Slang::Wrapper.new nil
     when "true"
-      Slang::Boolean.new true
+      Slang::Wrapper.new true
     when "false"
-      Slang::Boolean.new false
+      Slang::Wrapper.new false
     else
       Slang::Identifier.new value
     end
   end
 
   def number(token)
-    Slang::Number.new token.value.as(Int32)
+    token.value.as(Int32)
   end
 
   def string(token)
-    Slang::Str.new token.value.as(String)
+    token.value.as(String)
   end
 
   def atom(token)

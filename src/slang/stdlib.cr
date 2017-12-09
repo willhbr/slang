@@ -18,13 +18,13 @@ class Lib::Runtime
         
     func(bind, println) do |args|
       puts args.join(" ")
-      no_error! Slang::Object.nil
+      no_error! nil
     end
 
     func(bind, first) do |args|
       a = args[0]
       next error! "Can't get first of non-list" unless a.is_a? Slang::List
-      next no_error!(Slang::Object.nil) if a.empty?
+      next no_error!(nil) if a.empty?
       no_error! a.first
     end
 
@@ -32,16 +32,16 @@ class Lib::Runtime
       a = args[0]
       next error! "Can't get rest of non-list" unless a.is_a? Slang::List
       next no_error!(a) if a.empty?
-      no_error! Slang::List.new(a.data)
+      no_error! a.data
     end
 
     func(bind, :<=) do |args|
       a = args[0]
       b = args[1]
-      if a.is_a?(Slang::Number) && b.is_a?(Slang::Number)
-        no_error! Slang::Boolean.new a.value <= b.value
-      elsif a.is_a?(Slang::Str) && b.is_a?(Slang::Str)
-        no_error! Slang::Boolean.new a.value <= b.value
+      if a.is_a?(Int32) && b.is_a?(Int32)
+        no_error! a <= b
+      elsif a.is_a?(String) && b.is_a?(String)
+        no_error! a <= b
       else
         next error! "Can't compare that business"
       end
@@ -50,10 +50,10 @@ class Lib::Runtime
     func(bind, :+) do |args|
       a = args[0]
       b = args[1]
-      if a.is_a?(Slang::Number) && b.is_a?(Slang::Number)
-        no_error! Slang::Number.new a.value + b.value
-      elsif a.is_a?(Slang::Str) && b.is_a?(Slang::Str)
-        no_error! Slang::Str.new a.value + b.value
+      if a.is_a?(Int32) && b.is_a?(Int32)
+        no_error! a + b
+      elsif a.is_a?(String) && b.is_a?(String)
+        no_error! a + b
       else
        next error! "Can't add that business"
       end
@@ -62,8 +62,8 @@ class Lib::Runtime
     func(bind, :-) do |args|
       a = args[0]
       b = args[1]
-      if a.is_a?(Slang::Number) && b.is_a?(Slang::Number)
-        no_error! Slang::Number.new a.value - b.value
+      if a.is_a?(Int32) && b.is_a?(Int32)
+        no_error! a - b
       else
         next error! "Can't subtract that business"
       end
@@ -72,8 +72,8 @@ class Lib::Runtime
     func(bind, :*) do |args|
       a = args[0]
       b = args[1]
-      if a.is_a?(Slang::Number) && b.is_a?(Slang::Number)
-        no_error! Slang::Number.new a.value * b.value
+      if a.is_a?(Int32) && b.is_a?(Int32)
+        no_error! a * b
       else
         error! "Can't multiply that business"
       end
