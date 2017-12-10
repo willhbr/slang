@@ -96,6 +96,9 @@ class Interpreter
           result = try! expand_macros(ast[2], bindings) 
           ns = bindings["*ns*"].as(NS)
           ns[name.value] = result
+          if result.is_a? Slang::Function
+            result.bound_name = name.value
+          end
           exp = Slang::List.create(Slang::Identifier.new("def"), name, result)
           return no_error! exp
         else
@@ -170,6 +173,9 @@ class Interpreter
         result = try! eval(ast[2], bindings, in_macro)
         ns = bindings["*ns*"].as(NS)
         ns[name.value] = result
+        if result.is_a? Slang::Function
+          result.bound_name = name.value
+        end
         return no_error! result
       when "fn" # TODO Move working out the args into a macro?
         args = ast[1]

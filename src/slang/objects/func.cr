@@ -21,6 +21,7 @@ module Slang
     property kw_name
     property captured
     property body
+    property bound_name : String? = nil
 
     def initialize(@arg_names : Array(Identifier), @captured : Bindings,
                    @body : Slang::List, @splat_name : Identifier? = nil, @kw_name : Identifier? = nil)
@@ -50,26 +51,23 @@ module Slang
     end
 
     def to_s(io)
-      io << '('
-      io << {{ @type.stringify }}
-      io << " ["
-      first = true
-      @arg_names.each do |arg|
-        io << ' ' unless first
-        first = false
-        arg.to_s(io)
+      if b = @bound_name
+        io << "fn-"
+        io << b
+      else
+        io << "fn-"
       end
-      io << "] "
-      @body.each do |arg|
-        arg.to_s(io)
-      end
-      if @body.empty?
-        io << "nil"
-      end
-      io << ')'
     end
   end
 
   class Macro < Function
+    def to_s(io)
+      if b = @bound_name
+        io << "macro-"
+        io << b
+      else
+        io << "macro-"
+      end
+    end
   end
 end
