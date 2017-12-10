@@ -1,3 +1,3 @@
-(def foo1 (fn [] (println "foo")))
+(def func (fn [& kw] (println kw)))
 
-(foo1)
+(func foo: "bar")

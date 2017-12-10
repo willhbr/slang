@@ -255,11 +255,13 @@ module Slang
   class Function
     property arg_names
     property splat_name
+    # TODO this doesn't do anything
+    property kw_name
     property captured
     property body
 
     def initialize(@arg_names : Array(Identifier), @captured : Bindings,
-                   @body : Slang::List, @splat_name : Identifier? = nil)
+                   @body : Slang::List, @splat_name : Identifier? = nil, @kw_name : Identifier? = nil)
     end
 
     def to_s(io)

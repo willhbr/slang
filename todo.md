@@ -5,10 +5,9 @@
 + modules
 + loading files
 + better strings
-+ sigils
 + floats
 + maybe larger numbers
-+ immutable.cr structures
+- immutable.cr structures
 + atom, set!
 + set literals and set structure
 + function argument destructuring

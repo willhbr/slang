@@ -213,7 +213,6 @@ class Interpreter
           try! eval(expr, bindings, in_macro)
         }
 
-      # I really don't know about these...
       when "quote"
         raise "Can't quote outside macro" unless in_macro
         return expand_unquotes(ast[1], bindings, in_macro)
@@ -231,25 +230,35 @@ class Interpreter
         res = try! eval(ast[2], bindings, in_macro)
         bindings.topmost[name.value] = res
         return no_error! res
-      when "fn"
+      when "fn" # TODO Move working out the args into a macro?
         args = ast[1]
         return error! "args must be vector" unless args.is_a? Slang::Vector
         arguments = Array(Slang::Identifier).new
         splat_started = false
         splat_arg = nil
+        kwargs_arg = nil
+        kw_started = false
         args.each do |arg|
           return error! "Args must be identifiers" unless arg.is_a? Slang::Identifier
           if arg.value == "&"
             splat_started = true
             next
           end
+          if arg.value == "*"
+            kw_started = true
+            next
+          end
           if splat_started
             splat_arg = arg
-            break
+            next
+          end
+          if kw_started
+            kwargs_arg = arg
+            next
           end
           arguments << arg
         end
-        return no_error! Slang::Function.new(arguments, bindings, ast.data.data, splat_arg)
+        return no_error! Slang::Function.new(arguments, bindings, ast.data.data, splat_arg, kwargs_arg)
       when "if"
         cond = try! eval(ast[1], bindings, in_macro)
         if truthy? cond
