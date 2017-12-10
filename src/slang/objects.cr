@@ -27,7 +27,6 @@ module Slang
 
   class List
     property head : Node? = nil
-    property tail : Node? = nil
 
     def initialize(eachable)
       return if eachable.empty?
@@ -56,14 +55,13 @@ module Slang
     def initialize
     end
 
-    def initialize(node : Node?, tail : Node?)
+    def initialize(node : Node?)
       @head = node
-      @tail = tail
     end
 
     def self.create(value)
       n = Node.new(value)
-      List.new n, n
+      List.new n
     end
 
     def empty?
@@ -80,7 +78,7 @@ module Slang
 
     def data
       if h = @head
-        List.new h.rest, @tail.as(Node)
+        List.new h.rest
       else
         List.new
       end
@@ -94,50 +92,37 @@ module Slang
       end
     end
 
-    def each_but_last
-      current = @head
-      return unless current
-      while (r = current.rest) && r != @tail
-        yield current.value
-        current = r
-      end
-    end
-
     def rest
       if h = @head
-        List.new h.rest, @tail
+        List.new h.rest
       else
         List.new
       end
     end
 
-    def last
-      if l = @tail
-        l.value
-      else
-        raise "can't last empty list"
+    def each_return_last(&block)
+      result = nil
+      current = @head
+      while current
+        result = yield current.value
+        current = current.rest
       end
-    end
-
-    def conj(value)
-      node = Node.new value
-      if t = @tail
-        t.rest = node
-        @tail = node
-      else
-        @tail = @head = node
-      end
+      result
     end
 
     def map(&block)
       current = @head
       return unless current
-      list = List.new
+      head = Node.new yield current.value
+      prev = head
+      current = current.rest
       while current
-        list.conj yield current.value
+        n = Node.new yield current.value
+        prev.rest = n
+        prev = n
         current = current.rest
       end
-      list
+      List.new head
     end
 
     def map_to_arr(&block)
@@ -176,7 +161,7 @@ module Slang
       current = @head
       while current
         if idx == 0
-          return List.new current, @tail
+          return List.new current
         end
         idx -= 1
         current = current.rest

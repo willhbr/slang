@@ -158,15 +158,9 @@ class Interpreter
               binds[splat.value] = Slang::Vector.from(rest)
             end
 
-            mac.body.each_but_last do |expr|
+            return no_error! mac.body.each_return_last { |expr|
               try! expand_and_eval(expr, binds, true)
-            end
-            if mac.body.empty?
-              return no_error! nil
-            else
-              macro_result = try! expand_and_eval(mac.body.last, binds, true)
-              return expand_macros(macro_result, bindings)
-            end
+            }
           else
             return no_error! ast.map { |a| try! expand_macros(a, bindings) }
           end
@@ -192,117 +186,106 @@ class Interpreter
   end
 
   def self.eval(ast : Slang::Object, bindings, in_macro) : Slang::Result
-    loop do
-      return eval_node(ast, bindings, in_macro) unless ast.is_a? Slang::List
-      return eval_node(ast, bindings, in_macro) if ast.is_a? Slang::Vector
+    return eval_node(ast, bindings, in_macro) unless ast.is_a? Slang::List
+    return eval_node(ast, bindings, in_macro) if ast.is_a? Slang::Vector
 
-      raise "Can't eval empty list" if ast.empty?
+    raise "Can't eval empty list" if ast.empty?
 
-      if (first = ast.first) && first.is_a?(Slang::Identifier)
-        name = first.value
-        case name
-        when "let"
-          inner = Bindings.new bindings
-          binds = ast[1]
-          return error! "bindings must be a vector" unless binds.is_a? Slang::Vector
-          return error! "must give bindings in key-value pairs" unless binds.size % 2 == 0
-          binds.each_slice(2) do |assignment|
-            name, value = assignment
-            return error! "name must be identifier, got #{name}" unless name.is_a? Slang::Identifier
-            inner[name.value] = try! eval(value, inner, in_macro)
-          end
-          bindings = inner
-          ast.rest.each_but_last do |expr|
-            try! eval(expr, bindings, in_macro)
-          end
-          ast = ast.last
-          next
-        when "do"
-          ast.each_but_last do |expr|
-            try! eval(expr, bindings, in_macro)
-          end
-          ast = ast.last
-          next
-
-        # I really don't know about these...
-        when "quote"
-          raise "Can't quote outside macro" unless in_macro
-          return expand_unquotes(ast[1], bindings, in_macro)
-        when "unquote"
-          raise "Can't unquote outside macro" unless in_macro
-          return eval(ast[1], bindings, in_macro)
-        when "unquote-splice"
-          raise "Can't unquote-splice outside macro" unless in_macro
-          inner = try! eval(ast[1], bindings, in_macro)
-          return no_error! Slang::Splice.new(inner)
-
-        when "def"
-          name = ast[1]
-          return error! "name must be identifier" unless name.is_a? Slang::Identifier
-          res = try! eval(ast[2], bindings, in_macro)
-          bindings.topmost[name.value] = res
-          return no_error! res
-        when "fn"
-          args = ast[1]
-          return error! "args must be vector" unless args.is_a? Slang::Vector
-          arguments = Array(Slang::Identifier).new
-          splat_started = false
-          splat_arg = nil
-          args.each do |arg|
-            return error! "Args must be identifiers" unless arg.is_a? Slang::Identifier
-            if arg.value == "&"
-              splat_started = true
-              next
-            end
-            if splat_started
-              splat_arg = arg
-              break
-            end
-            arguments << arg
-          end
-          return no_error! Slang::Function.new(arguments, bindings, ast.data.data, splat_arg)
-        when "if"
-          cond = try! eval(ast[1], bindings, in_macro)
-          if truthy? cond
-            return eval(ast[2], bindings, in_macro)
-          elsif other = ast[3]?
-            return eval(other, bindings, in_macro)
-          else
-            return no_error! nil
-          end
+    if (first = ast.first) && first.is_a?(Slang::Identifier)
+      name = first.value
+      case name
+      when "let"
+        inner = Bindings.new bindings
+        binds = ast[1]
+        return error! "bindings must be a vector" unless binds.is_a? Slang::Vector
+        return error! "must give bindings in key-value pairs" unless binds.size % 2 == 0
+        binds.each_slice(2) do |assignment|
+          name, value = assignment
+          return error! "name must be identifier, got #{name}" unless name.is_a? Slang::Identifier
+          inner[name.value] = try! eval(value, inner, in_macro)
         end
-      end
+        bindings = inner
+        return no_error! ast.rest.each_return_last { |expr|
+          try! eval(expr, bindings, in_macro)
+        }
+      when "do"
+        return no_error! ast.rest.each_return_last { |expr|
+          try! eval(expr, bindings, in_macro)
+        }
 
-      func = try! eval(ast.first, bindings, in_macro)
+      # I really don't know about these...
+      when "quote"
+        raise "Can't quote outside macro" unless in_macro
+        return expand_unquotes(ast[1], bindings, in_macro)
+      when "unquote"
+        raise "Can't unquote outside macro" unless in_macro
+        return eval(ast[1], bindings, in_macro)
+      when "unquote-splice"
+        raise "Can't unquote-splice outside macro" unless in_macro
+        inner = try! eval(ast[1], bindings, in_macro)
+        return no_error! Slang::Splice.new(inner)
 
-      if func.is_a? Slang::Function
-        binds = Bindings.new func.captured
-        values = ast.data
-        func.arg_names.each_with_index do |name, idx|
-          arg = values[idx]
-          binds[name.value] = try! eval(arg, bindings, in_macro)
-        end
-
-        if splat = func.splat_name
-          rest = Array(Slang::Object).new
-          values.from(func.arg_names.size).each do |arg|
-            rest.push(try! eval(arg, bindings, in_macro))
+      when "def"
+        name = ast[1]
+        return error! "name must be identifier" unless name.is_a? Slang::Identifier
+        res = try! eval(ast[2], bindings, in_macro)
+        bindings.topmost[name.value] = res
+        return no_error! res
+      when "fn"
+        args = ast[1]
+        return error! "args must be vector" unless args.is_a? Slang::Vector
+        arguments = Array(Slang::Identifier).new
+        splat_started = false
+        splat_arg = nil
+        args.each do |arg|
+          return error! "Args must be identifiers" unless arg.is_a? Slang::Identifier
+          if arg.value == "&"
+            splat_started = true
+            next
           end
-          binds[splat.value] = Slang::Vector.from(rest)
+          if splat_started
+            splat_arg = arg
+            break
+          end
+          arguments << arg
         end
-
-        func.body.each_but_last do |expr|
-          try! eval(expr, binds, in_macro)
-        end
-        if func.body.empty?
-          return no_error! nil
+        return no_error! Slang::Function.new(arguments, bindings, ast.data.data, splat_arg)
+      when "if"
+        cond = try! eval(ast[1], bindings, in_macro)
+        if truthy? cond
+          return eval(ast[2], bindings, in_macro)
+        elsif other = ast[3]?
+          return eval(other, bindings, in_macro)
         else
-          return eval(func.body.last, binds, in_macro)
+          return no_error! nil
         end
-      else
-        return error! "Can't call non-function" unless func.is_a? Slang::CrystalFn
-        return func.call(ast.data.map_to_arr { |expr| try! eval(expr, bindings, in_macro) })
       end
+    end
+
+    func = try! eval(ast.first, bindings, in_macro)
+
+    if func.is_a? Slang::Function
+      binds = Bindings.new func.captured
+      values = ast.data
+      func.arg_names.each_with_index do |name, idx|
+        arg = values[idx]
+        binds[name.value] = try! eval(arg, bindings, in_macro)
+      end
+
+      if splat = func.splat_name
+        rest = Array(Slang::Object).new
+        values.from(func.arg_names.size).each do |arg|
+          rest.push(try! eval(arg, bindings, in_macro))
+        end
+        binds[splat.value] = Slang::Vector.from(rest)
+      end
+
+      return no_error! func.body.each_return_last { |expr|
+        try! eval(expr, binds, in_macro)
+      }
+    else
+      return error! "Can't call non-function" unless func.is_a? Slang::CrystalFn
+      return func.call(ast.data.map_to_arr { |expr| try! eval(expr, bindings, in_macro) })
     end
   end
 
