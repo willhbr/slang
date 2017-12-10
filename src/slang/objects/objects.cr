@@ -1,7 +1,6 @@
 require "immutable"
 
 module Slang
-
   class Identifier
     property value : String
 
@@ -205,7 +204,7 @@ module Slang
 
   alias Object = (Int32 | String | Bool | Immutable::Vector(Object) | List |
                   Immutable::Map(Object, Object) | Atom | Identifier | Splice |
-                  Function | CrystalFn | Regex | Nil | Wrapper)
+                  Function | CrystalFn | Regex | NS | Nil | Wrapper)
 
   alias Vector = Immutable::Vector(Object)
   alias Map = Immutable::Map(Object, Object)

@@ -1,61 +1,16 @@
-require "./objects"
+require "./objects/*"
 
-class Bindings
-  setter compile_time
-  getter previous
-  @previous : Bindings?
-  @bound = {} of String => Slang::Object
 
-  def initialize(@previous = nil, @compile_time = true)
-  end
+macro bind_put(var, key, value)
+  {{ var }} = {{ var }}.set({{ key }}, {{ value }})
+end
 
-  def compile_time?
-    @compile_time
-  end
+macro lookup(bindings, key)
+  ({{ bindings }}[{{ key }}]? || {{ bindings }}["*ns*"].as(NS)[{{ key }}])
+end
 
-  def topmost
-    top = self
-    while top.previous != nil
-      top = top.previous.as(Bindings)
-    end
-    top
-  end
-
-  def [](k)
-    v = @bound[k]?
-    return v unless v.nil?
-    if p = @previous
-      return p[k]
-    else
-      raise "Undefined variable #{k}"
-    end
-  end
-
-  def []?(k)
-    v = @bound[k]?
-    return v unless v.nil?
-    if p = @previous
-      return p[k]?
-    else
-      nil
-    end
-  end
-
-  def []=(k, v)
-    @bound[k] = v
-  end
-
-  def to_s(io)
-    @bound.each do |name, val|
-      io << name
-      io << ' '
-      io << val
-      io << '\n'
-    end
-    if prev = @previous
-      prev.to_s io
-    end
-  end
+macro lookup?(bindings, key)
+  ({{ bindings }}[{{ key }}]? || {{ bindings }}["*ns*"].as(NS)[{{ key }}]?)
 end
 
 class Interpreter
@@ -139,15 +94,16 @@ class Interpreter
           name = ast[1]
           raise "name must be identifier" unless name.is_a? Slang::Identifier
           result = try! expand_macros(ast[2], bindings) 
-          bindings.topmost[name.value] = result
+          ns = bindings["*ns*"].as(NS)
+          ns[name.value] = result
           exp = Slang::List.create(Slang::Identifier.new("def"), name, result)
           return no_error! exp
         else
-          if (mac = bindings[first.value]?) && mac.is_a?(Slang::Macro)
-            binds = Bindings.new mac.captured
+          if (mac = lookup?(bindings, first.value)) && mac.is_a?(Slang::Macro)
+            binds = mac.captured
             values = ast.data
             mac.arg_names.each_with_index do |name, idx|
-              binds[name.value] = values[idx]
+              bind_put(binds, name.value, values[idx])
             end
 
             if splat = mac.splat_name
@@ -155,7 +111,7 @@ class Interpreter
               values.from(mac.arg_names.size).each do |arg|
                 rest << arg
               end
-              binds[splat.value] = Slang::Vector.from(rest)
+              bind_put(binds, splat.value, Slang::Vector.from(rest))
             end
 
             return no_error! mac.body.each_return_last { |expr|
@@ -195,14 +151,14 @@ class Interpreter
       name = first.value
       case name
       when "let"
-        inner = Bindings.new bindings
+        inner = bindings
         binds = ast[1]
         return error! "bindings must be a vector" unless binds.is_a? Slang::Vector
         return error! "must give bindings in key-value pairs" unless binds.size % 2 == 0
         binds.each_slice(2) do |assignment|
           name, value = assignment
           return error! "name must be identifier, got #{name}" unless name.is_a? Slang::Identifier
-          inner[name.value] = try! eval(value, inner, in_macro)
+          bind_put inner, name.value, try! eval(value, inner, in_macro)
         end
         bindings = inner
         return no_error! ast.rest.each_return_last { |expr|
@@ -214,7 +170,6 @@ class Interpreter
         }
 
       when "quote"
-        raise "Can't quote outside macro" unless in_macro
         return expand_unquotes(ast[1], bindings, in_macro)
       when "unquote"
         raise "Can't unquote outside macro" unless in_macro
@@ -227,9 +182,10 @@ class Interpreter
       when "def"
         name = ast[1]
         return error! "name must be identifier" unless name.is_a? Slang::Identifier
-        res = try! eval(ast[2], bindings, in_macro)
-        bindings.topmost[name.value] = res
-        return no_error! res
+        result = try! eval(ast[2], bindings, in_macro)
+        ns = bindings["*ns*"].as(NS)
+        ns[name.value] = result
+        return no_error! result
       when "fn" # TODO Move working out the args into a macro?
         args = ast[1]
         return error! "args must be vector" unless args.is_a? Slang::Vector
@@ -274,11 +230,11 @@ class Interpreter
     func = try! eval(ast.first, bindings, in_macro)
 
     if func.is_a? Slang::Function
-      binds = Bindings.new func.captured
+      binds = func.captured
       values = ast.data
       func.arg_names.each_with_index do |name, idx|
         arg = values[idx]
-        binds[name.value] = try! eval(arg, bindings, in_macro)
+        bind_put binds, name.value, try!(eval(arg, bindings, in_macro))
       end
 
       if splat = func.splat_name
@@ -286,7 +242,7 @@ class Interpreter
         values.from(func.arg_names.size).each do |arg|
           rest.push(try! eval(arg, bindings, in_macro))
         end
-        binds[splat.value] = Slang::Vector.from(rest)
+        bind_put binds, splat.value, Slang::Vector.from(rest)
       end
 
       return no_error! func.body.each_return_last { |expr|
@@ -309,7 +265,7 @@ class Interpreter
       end
       no_error! Slang::Map.new(result)
     when Slang::Identifier
-      no_error! bindings[ast.value]
+      no_error! lookup(bindings, ast.value)
     else
       no_error! ast
     end

@@ -7,11 +7,14 @@ class Lib::Runtime
     {% else %}
       name = {{ name.stringify }}
     {% end %}
-    {{bind}}[name] = Slang::CrystalFn.new name {{ body }}
+    {{bind}} = {{bind}}.set(name, Slang::CrystalFn.new(name) {{ body }})
   end
 
   def self.new
     bind = Bindings.new
+    
+    bind = bind.set "*ns*", NS.new
+
     func(bind, raise) do |args|
       error! args.first.to_s
     end

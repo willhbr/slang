@@ -1,3 +1,8 @@
-(def func (fn [& kw] (println kw)))
+(def defn (macro [n a & b]
+                 `(def ~n (fn [~@a] ~@b))))
 
-(func foo: "bar")
+(defn func [a] (println a))
+
+(let [func 5]
+  (println func))
+(func 5)
