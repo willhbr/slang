@@ -100,23 +100,8 @@ class Interpreter
           return no_error! exp
         else
           if (mac = lookup?(bindings, first.value)) && mac.is_a?(Slang::Macro)
-            binds = mac.captured
-            values = ast.data
-            mac.arg_names.each_with_index do |name, idx|
-              bind_put(binds, name.value, values[idx])
-            end
-
-            if splat = mac.splat_name
-              rest = Array(Slang::Object).new
-              values.from(mac.arg_names.size).each do |arg|
-                rest << arg
-              end
-              bind_put(binds, splat.value, Slang::Vector.from(rest))
-            end
-
-            return no_error! mac.body.each_return_last { |expr|
-              try! expand_and_eval(expr, binds, true)
-            }
+            values = ast.data.map_to_arr &.itself
+            return mac.call(values)
           else
             return no_error! ast.map { |a| try! expand_macros(a, bindings) }
           end
@@ -230,24 +215,10 @@ class Interpreter
     func = try! eval(ast.first, bindings, in_macro)
 
     if func.is_a? Slang::Function
-      binds = func.captured
-      values = ast.data
-      func.arg_names.each_with_index do |name, idx|
-        arg = values[idx]
-        bind_put binds, name.value, try!(eval(arg, bindings, in_macro))
+      values = ast.rest.map_to_arr do |arg|
+        try! eval(arg, bindings, in_macro)
       end
-
-      if splat = func.splat_name
-        rest = Array(Slang::Object).new
-        values.from(func.arg_names.size).each do |arg|
-          rest.push(try! eval(arg, bindings, in_macro))
-        end
-        bind_put binds, splat.value, Slang::Vector.from(rest)
-      end
-
-      return no_error! func.body.each_return_last { |expr|
-        try! eval(expr, binds, in_macro)
-      }
+      func.call(values)
     else
       return error! "Can't call non-function" unless func.is_a? Slang::CrystalFn
       return func.call(ast.data.map_to_arr { |expr| try! eval(expr, bindings, in_macro) })

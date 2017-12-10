@@ -81,6 +81,33 @@ class Lib::Runtime
         error! "Can't multiply that business"
       end
     end
+
+    func(bind, reduce) do |args|
+      if args.size == 2
+        func = args[0].as(Slang::Function)
+        coll = args[1]
+        next error! "Can't iterate on #{coll}" unless coll.responds_to? :each
+        prev = nil
+        coll.each do |item|
+          if prev.nil?
+            prev = item
+          else
+            prev, error = func.call([prev.as(Slang::Object), item.as(Slang::Object)])
+          end
+        end
+        no_error! prev.as(Slang::Object)
+      else
+        func = args[0].as(Slang::Function)
+        default = args[1]
+        coll = args[2]
+        next error! "Can't iterate on #{coll}" unless coll.responds_to? :each
+        prev = default
+        coll.each do |item|
+          prev, error = func.call([prev.as(Slang::Object), item.as(Slang::Object)])
+        end
+        no_error! prev.as(Slang::Object)
+      end
+    end
     bind
   end
 end
