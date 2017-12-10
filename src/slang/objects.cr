@@ -205,7 +205,7 @@ module Slang
 
   alias Object = (Int32 | String | Bool | Immutable::Vector(Object) | List |
                   Immutable::Map(Object, Object) | Atom | Identifier | Splice |
-                  Function | CrystalFn | Nil | Wrapper)
+                  Function | CrystalFn | Regex | Nil | Wrapper)
 
   alias Vector = Immutable::Vector(Object)
   alias Map = Immutable::Map(Object, Object)

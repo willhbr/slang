@@ -80,6 +80,10 @@ class Scanner
           next
         when '"'
           yield sym(:STRING, string)
+        when '#'
+          yield sym(:READER_MACRO)
+        when '/'
+          yield sym(:REGEX_LITERAL, regex)
         else
           if is_digit(char)
             yield sym(:NUMBER, number(char))
@@ -137,6 +141,17 @@ class Scanner
   def string
     buffer = ""
     while char = advance_when { |char| char != '"' }
+      buffer = buffer + char
+    end
+    advance?
+    buffer
+  end
+
+  # TODO maybe support some suffix flags?
+  # Although the scanner has to know about it, which is kinda annoying
+  def regex
+    buffer = ""
+    while char = advance_when { |char| char != '/' }
       buffer = buffer + char
     end
     advance?

@@ -64,6 +64,8 @@ class Parser
       o = object
       return nil unless o
       Slang::List.unquote_spliced o
+    when :READER_MACRO
+      reader_macro
     when :IDENTIFIER
       identifier(sym)
     when :NUMBER
@@ -135,6 +137,36 @@ class Parser
       Slang::Wrapper.new false
     else
       Slang::Identifier.new value
+    end
+  end
+
+  def reader_macro
+    sym = pop_sym?
+    raise "Unexpected EOF" unless sym
+    case sym.type
+    when :IDENTIFIER
+      name = Slang::Identifier.new sym.value.as(String)
+      rest = reader_subject
+      Slang::List.create name, rest
+    else
+      sym.parse_error ""
+    end
+  end
+
+  def reader_subject
+    sym = pop_sym?
+    raise "Unexpected EOF" unless sym
+    case sym.type
+    when :"["
+      list sym, :"]", Slang::Vector
+    when :"("
+      list sym, :")", Slang::List
+    when :"{"
+      map sym
+    when :REGEX_LITERAL, :STRING
+      sym.value.as(String)
+    else
+      sym.parse_error "Unexpected token"
     end
   end
 
