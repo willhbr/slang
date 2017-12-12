@@ -26,7 +26,7 @@ module Slang
 
   alias Object = (Int32 | String | Bool | Immutable::Vector(Object) | List |
                   Immutable::Map(Object, Object) | Atom | Identifier | Splice |
-                  Function | CrystalFn | Regex | NS | Nil | Wrapper)
+                  Function | CrystalFn | Regex | NSes | NS | Nil | Wrapper)
 
 
   alias Result = {Slang::Object, Slang::Error?}

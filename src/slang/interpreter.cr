@@ -6,11 +6,11 @@ macro bind_put(var, key, value)
 end
 
 macro lookup(bindings, key)
-  ({{ bindings }}[{{ key }}]? || {{ bindings }}["*ns*"].as(NS)[{{ key }}])
+  ({{ bindings }}[{{ key }}]? || {{ bindings }}["*ns*"].as(NSes)[{{ key }}])
 end
 
 macro lookup?(bindings, key)
-  ({{ bindings }}[{{ key }}]? || {{ bindings }}["*ns*"].as(NS)[{{ key }}]?)
+  ({{ bindings }}[{{ key }}]? || {{ bindings }}["*ns*"].as(NSes)[{{ key }}]?)
 end
 
 class Interpreter
@@ -65,6 +65,11 @@ class Interpreter
     when Slang::List
       if (first = ast.first) && first.is_a?(Slang::Identifier)
         case first.value
+        when "ns"
+          name = ast[1]
+          raise "ns must be identifier" unless name.is_a? Slang::Identifier
+          bindings["*ns*"].as(NSes).change_ns(name.value)
+          return no_error! ast
         when "quote"
           return no_error! ast
         when "macro"
@@ -94,7 +99,7 @@ class Interpreter
           name = ast[1]
           raise "name must be identifier" unless name.is_a? Slang::Identifier
           result = try! expand_macros(ast[2], bindings) 
-          ns = bindings["*ns*"].as(NS)
+          ns = bindings["*ns*"].as(NSes)
           ns[name.value] = result
           if result.is_a? Slang::Function
             result.bound_name = name.value
@@ -138,6 +143,11 @@ class Interpreter
     if (first = ast.first) && first.is_a?(Slang::Identifier)
       name = first.value
       case name
+      when "ns"
+        name = ast[1]
+        raise "ns must be identifier" unless name.is_a? Slang::Identifier
+        bindings["*ns*"].as(NSes).change_ns(name.value)
+        return no_error! nil
       when "let"
         inner = bindings
         binds = ast[1]
@@ -171,7 +181,7 @@ class Interpreter
         name = ast[1]
         return error! "name must be identifier" unless name.is_a? Slang::Identifier
         result = try! eval(ast[2], bindings, in_macro)
-        ns = bindings["*ns*"].as(NS)
+        ns = bindings["*ns*"].as(NSes)
         ns[name.value] = result
         if result.is_a? Slang::Function
           result.bound_name = name.value

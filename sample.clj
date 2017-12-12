@@ -1,3 +1,5 @@
+(ns Main)
+
 (def defn (macro [n a & b]
                  `(def ~n (fn [~@a] ~@b))))
 
@@ -12,10 +14,13 @@
 
 (let [func func]
   (println (func func)))
-(func 5)
+
+(ns Other)
 
 (println (reduce (fn [a b] (+ a b)) [1 2 3]))
 
-(defn foo [a] [~@a])
+(Main.defn foo [a] [~@a])
 
 (println (foo [1 2 3]))
+
+(println *ns*)

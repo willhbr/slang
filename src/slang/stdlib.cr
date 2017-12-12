@@ -13,7 +13,7 @@ class Lib::Runtime
   def self.new
     bind = Bindings.new
     
-    bind = bind.set "*ns*", NS.new
+    bind = bind.set "*ns*", NSes.new
 
     func(bind, raise) do |args|
       error! args.first.to_s
