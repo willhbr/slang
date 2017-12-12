@@ -1,6 +1,8 @@
 # slang
 
-TODO: Write a description here
+[![Build Status](https://travis-ci.org/javanut13/slang.svg?branch=master)](https://travis-ci.org/javanut13/slang)
+
+A silly Lisp implementation in Crystal. Semantics modelled after Clojure, with some Elixir in there too.
 
 ## Installation
 
