@@ -55,15 +55,15 @@ class Parser
     when :"'", :"`"
       o = object
       return nil unless o
-      Slang::List.quoted o
+      Slang::List.quoted sym.location, o
     when :"~"
       o = object
       return nil unless o
-      Slang::List.unquoted o
+      Slang::List.unquoted sym.location, o
     when :"~@"
       o = object
       return nil unless o
-      Slang::List.unquote_spliced o
+      Slang::List.unquote_spliced sym.location, o
     when :READER_MACRO
       reader_macro
     when :IDENTIFIER
@@ -136,7 +136,7 @@ class Parser
     when "false"
       Slang::Wrapper.new false
     else
-      Slang::Identifier.new value
+      Slang::Identifier.new token.location, value
     end
   end
 
@@ -145,7 +145,7 @@ class Parser
     raise "Unexpected EOF" unless sym
     case sym.type
     when :IDENTIFIER
-      name = Slang::Identifier.new sym.value.as(String)
+      name = Slang::Identifier.new sym.location, sym.value.as(String)
       rest = reader_subject
       Slang::List.create name, rest
     else

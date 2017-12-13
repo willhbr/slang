@@ -2,21 +2,34 @@ require "./token"
 
 class Scanner
   @index = 0
+  @line = 1
+  @column = 1
+  @current = '\0'
   @peeked : Char? = nil
 
   def initialize(@file_path : String)
     @input = File.open(@file_path)
   end
 
+  private def advance_idx
+    @index += 1
+    @column += 1
+    if @current == '\n'
+      @line += 1
+      @column = 0
+    end
+  end
+
   def advance?
     if peeked = @peeked
       @peeked = nil
-      @index += 1
+      advance_idx
       return peeked
     end
     char = @input.read_char
     return nil unless char
-    @index += 1
+    @current = char
+    advance_idx
     char
   end
 
@@ -95,7 +108,7 @@ class Scanner
               yield sym(:IDENTIFIER, val)
             end
           else
-            raise ParseError.new("Invalid character #{char} ", @index, @file_path)
+            raise ParseError.new("Invalid character #{char} ", current_file_location)
           end
       end
     end
@@ -103,7 +116,11 @@ class Scanner
   end
 
   def sym(type, value=nil)
-    Token.new @index, @file_path, type, value
+    Token.new current_file_location, type, value
+  end
+
+  def current_file_location
+    FileLocation.new @file_path, @line, @column
   end
 
   def is_digit(char)

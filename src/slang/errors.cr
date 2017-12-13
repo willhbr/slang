@@ -1,36 +1,18 @@
 abstract class CompileError < Exception
-  @line_column : {Int32, Int32}?
-  def initialize(@index : Int32, @file : String)
-  end
+  property location : FileLocation
 
-  def line_column
-    if line_col = @line_column
-      return line_col 
-    end
-    idx = 0
-    line_num = 1
-    File.each_line(@file) do |line|
-      if idx + line.size > @index
-        @line_column = line_col = {line_num, @index - idx}
-        return line_col
-      end
-      idx += line.size
-    end
-    return {line_num, 0}
+  def initialize(@location)
   end
 end
 
 class ParseError < CompileError
-  def initialize(@message : String, index, path)
-    super(index, path)
+  def initialize(@message : String, location)
+    super(location)
   end
 
   def to_s(io)
     io << @message
-    line, col = line_column
-    io << line
-    io << ':'
-    io << col
+    location.to_s(io)
   end
 end
 

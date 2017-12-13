@@ -24,7 +24,7 @@ class Runner
     program.each do |expr|
       val, err = Interpreter.expand_macros(expr, @compile_time)
       if err
-        raise err.to_s
+        puts err.backtrace
         return
       end
       res << val
@@ -38,7 +38,7 @@ class Runner
     program.each do |expr|
       res, err = Interpreter.eval(expr, @runtime, false)
       if err
-        raise err.to_s
+        puts err.backtrace
         return
       end
     end

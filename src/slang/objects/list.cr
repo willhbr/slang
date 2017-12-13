@@ -154,18 +154,18 @@ module Slang
       io << ')'
     end
 
-    def self.quoted(rest)
-      create(Identifier.new("quote"), rest)
+    def self.quoted(location, rest)
+      create(Identifier.new(location, "quote"), rest)
     end
-    def self.unquote_spliced(rest)
-      create(Identifier.new("unquote-splice"), rest)
+    def self.unquote_spliced(location, rest)
+      create(Identifier.new(location, "unquote-splice"), rest)
     end
-    def self.unquoted(rest)
-      create(Identifier.new("unquote"), rest)
+    def self.unquoted(location, rest)
+      create(Identifier.new(location, "unquote"), rest)
     end
-    def self.do(rest : Array(Object))
-      tail = from(rest)
-      create(Identifier.new("do"), tail)
+    def self.do(location, rest : Array(Object))
+      tail = from(res, t)
+      create(Identifier.new(location, "do"), tail)
     end
   end
 

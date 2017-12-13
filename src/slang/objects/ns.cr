@@ -13,7 +13,6 @@ class NSes
   end
 
   def change_ns(new_name)
-    puts "Changing from #{@current} to #{new_name}"
     prev = @current
     @current = nses[new_name]? || NS.new new_name
     @current.import(prev)

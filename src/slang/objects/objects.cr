@@ -1,10 +1,12 @@
 require "immutable"
 
 module Slang
+
   class Identifier
     property value : String
+    property location : FileLocation
 
-    def initialize(@value)
+    def initialize(@location, @value)
     end
 
     def to_s(io)
@@ -59,11 +61,18 @@ module Slang
   end
 
   class Error
-    def initialize(@message : String, @index : Int32, @file : String)
+    property trace : Array(Identifier)    
+
+    def initialize(@message : String, cause : Identifier)
+      @trace = [] of Identifier
     end
 
     def to_s(io)
       io << @message
+    end
+
+    def backtrace
+      "#{@message}: #{@trace.join '\n'}"
     end
   end
 end

@@ -104,7 +104,7 @@ class Interpreter
           if result.is_a? Slang::Function
             result.bound_name = name.value
           end
-          exp = Slang::List.create(Slang::Identifier.new("def"), name, result)
+          exp = Slang::List.create(first, name, result)
           return no_error! exp
         else
           if (mac = lookup?(bindings, first.value)) && mac.is_a?(Slang::Macro)
@@ -136,13 +136,11 @@ class Interpreter
 
   def self.eval(ast : Slang::Object, bindings, in_macro) : Slang::Result
     return eval_node(ast, bindings, in_macro) unless ast.is_a? Slang::List
-    return eval_node(ast, bindings, in_macro) if ast.is_a? Slang::Vector
 
     raise "Can't eval empty list" if ast.empty?
 
     if (first = ast.first) && first.is_a?(Slang::Identifier)
-      name = first.value
-      case name
+      case first.value
       when "ns"
         name = ast[1]
         raise "ns must be identifier" unless name.is_a? Slang::Identifier
