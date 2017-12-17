@@ -40,7 +40,7 @@ class NS
 
   def initialize(@name)
     @imported[@name] = self
-    @defs[@name] = self
+    @defs[@name] = self.as(Slang::Object)
   end
 
   def import(ns : NS)

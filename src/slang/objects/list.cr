@@ -164,7 +164,7 @@ module Slang
       create(Identifier.new(location, "unquote"), rest)
     end
     def self.do(location, rest : Array(Object))
-      tail = from(res, t)
+      tail = from(rest)
       create(Identifier.new(location, "do"), tail)
     end
   end

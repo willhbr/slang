@@ -28,8 +28,7 @@ module Slang
 
   alias Object = (Int32 | String | Bool | Immutable::Vector(Object) | List |
                   Immutable::Map(Object, Object) | Atom | Identifier | Splice |
-                  Function | CrystalFn | Regex | NSes | NS | Nil | Wrapper)
-
+                  Function | Callable | Instance | Regex | NSes | NS | Nil | Wrapper)
 
   alias Result = {Slang::Object, Slang::Error?}
 
@@ -76,3 +75,48 @@ module Slang
     end
   end
 end
+struct Int32
+
+end
+class String
+
+end
+struct Bool
+
+end
+struct Atom
+
+end
+class Identifier
+
+end
+class Splice
+
+end
+class Function
+
+end
+class Callable
+
+end
+class Instance
+
+end
+class Regex
+
+end
+class NSes
+
+end
+class NS
+
+end
+struct Nil
+
+end
+struct Wrapper
+
+end
+
+
+

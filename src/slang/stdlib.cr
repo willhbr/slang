@@ -1,19 +1,20 @@
 require "./objects"
+require "../slang"
+
+macro func(bind, name, type=Slang::CrystalFn, &body)
+  {% if name.is_a? SymbolLiteral %}
+    name = {{ name }}.to_s
+  {% else %}
+    name = {{ name.stringify }}
+  {% end %}
+  {{bind}} = {{bind}}.set(name, ({{ type }}.new(name) {{ body }}))
+end
 
 class Lib::Runtime
-  macro func(bind, name, &body)
-    {% if name.is_a? SymbolLiteral %}
-      name = {{ name }}.to_s
-    {% else %}
-      name = {{ name.stringify }}
-    {% end %}
-    {{bind}} = {{bind}}.set(name, Slang::CrystalFn.new(name) {{ body }})
-  end
-
   def self.new
     bind = Bindings.new
     
-    bind = bind.set "*ns*", NSes.new
+    bind = bind.set "*ns*", NSes.new.as(Slang::Object)
 
     func(bind, raise) do |args|
       error! args.first.to_s
@@ -115,7 +116,6 @@ end
 class Lib::CompileTime
   def self.new
     bind = Lib::Runtime.new
-    # TODO
     bind
   end
 end

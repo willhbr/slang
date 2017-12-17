@@ -18,6 +18,7 @@ class Interpreter
     res = Array(Slang::Object).new
     ast.each do |node|
       expanded = try! expand_unquotes(node, bindings, in_macro)
+      expanded = try! eval(expanded, bindings, false) unless in_macro
       if expanded.is_a? Slang::Splice
         expanded.into res
       else
@@ -101,13 +102,14 @@ class Interpreter
           result = try! expand_macros(ast[2], bindings) 
           ns = bindings["*ns*"].as(NSes)
           ns[name.value] = result
-          if result.is_a? Slang::Function
-            result.bound_name = name.value
+          if result.responds_to? :"name="
+            result.name = name.value
           end
           exp = Slang::List.create(first, name, result)
           return no_error! exp
         else
-          if (mac = lookup?(bindings, first.value)) && mac.is_a?(Slang::Macro)
+          mac = lookup?(bindings, first.value)
+          if mac && (mac.is_a?(Slang::Macro) || mac.is_a?(Slang::CrystalMacro))
             values = ast.data.map_to_arr &.itself
             return mac.call(values)
           else
@@ -141,6 +143,13 @@ class Interpreter
 
     if (first = ast.first) && first.is_a?(Slang::Identifier)
       case first.value
+      when "type"
+        names = Array(String).new
+        ast.data.each do |attr|
+          return error! "Attributes must be identifiers" unless attr.is_a? Slang::Identifier
+          names << attr.value
+        end
+        return no_error! Slang::Type.new names
       when "ns"
         name = ast[1]
         raise "ns must be identifier" unless name.is_a? Slang::Identifier
@@ -181,8 +190,8 @@ class Interpreter
         result = try! eval(ast[2], bindings, in_macro)
         ns = bindings["*ns*"].as(NSes)
         ns[name.value] = result
-        if result.is_a? Slang::Function
-          result.bound_name = name.value
+        if result.responds_to? :"name="
+          result.name = name.value
         end
         return no_error! result
       when "fn" # TODO Move working out the args into a macro?
@@ -228,7 +237,7 @@ class Interpreter
 
     func = try! eval(ast.first, bindings, in_macro)
 
-    if func.is_a? Slang::Function
+    if func.is_a? Slang::Callable
       values = ast.rest.map_to_arr do |arg|
         try! eval(arg, bindings, in_macro)
       end

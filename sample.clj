@@ -1,15 +1,11 @@
 (ns Main)
 
-(def defn (macro [n a & b]
-                 `(def ~n (fn [~@a] ~@b))))
+(def defn (macro [n a & b] '(def ~n (fn ~a ~@b))))
 
-(defn error-fn [] (raise "This is an error! oh no!"))
+(def Person (type first-name last-name))
 
-(defn anon-error-fn []
-  (let [func (fn [] (error-fn))]
-    (func)))
+(println Person)
 
-(defn proxy-fun []
-  (error-fn))
-
-(proxy-fun)
+(let [people [(Person "Will" "Richardson")
+              (Person "John" "Smith")]]
+  (println people))

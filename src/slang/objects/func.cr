@@ -1,7 +1,11 @@
 require "../slang/interpreter"
 
 module Slang
-  class CrystalFn
+  abstract class Callable
+    abstract def call(args) : Result
+  end
+
+  class CrystalFn < Callable
     def initialize(@name : String, &@block : Array(Object) -> Result)
     end
 
@@ -14,6 +18,9 @@ module Slang
     end
   end
 
+  class CrystalMacro < CrystalFn
+  end
+
   class Function
     property arg_names
     property splat_name
@@ -21,7 +28,7 @@ module Slang
     property kw_name
     property captured
     property body
-    property bound_name : String? = nil
+    property name : String? = nil
 
     def initialize(@arg_names : Array(Identifier), @captured : Bindings,
                    @body : Slang::List, @splat_name : Identifier? = nil, @kw_name : Identifier? = nil)
@@ -34,7 +41,7 @@ module Slang
     def call(values)
       binds = @captured
       @arg_names.each_with_index do |name, idx|
-        bind_put binds, name.value, values[idx]
+        bind_put binds, name.value, values[idx]?
       end
 
       if splat = @splat_name
@@ -51,7 +58,7 @@ module Slang
     end
 
     def to_s(io)
-      if b = @bound_name
+      if b = @name
         io << "fn-"
         io << b
       else
@@ -62,7 +69,7 @@ module Slang
 
   class Macro < Function
     def to_s(io)
-      if b = @bound_name
+      if b = @name
         io << "macro-"
         io << b
       else
