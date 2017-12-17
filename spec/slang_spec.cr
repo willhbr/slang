@@ -10,4 +10,10 @@ describe Slang do
     r.execute tree
   end
 
+  it "calls a protocol method" do
+    o = "Hello world"
+    puts o.type
+    puts o.send(Protocols.lengthable, "length", [o] of Slang::Object)
+  end
+
 end

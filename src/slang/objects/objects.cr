@@ -75,11 +75,32 @@ module Slang
     end
   end
 end
+class Protocols
+  @@lengthable = Slang::Protocol.new(["length"])
+  def self.lengthable
+    @@lengthable
+  end
+end
 struct Int32
 
 end
-class String
+class StringType < Slang::Type
+  def initialize
+    super [] of String
+    @name = "String"
+    @implementations[Protocols.lengthable] = Slang::ProtocolImplementation.new({
+      "length" => Slang::CrystalFn.new("length") do |args|
+        no_error! args.first.as(String).size
+      end.as(Slang::Callable)
+    })
+  end
 
+  def self.instance
+    @@inst ||= StringType.new
+  end
+end
+class String
+  include Slang::CrystalSendable
 end
 struct Bool
 
