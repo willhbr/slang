@@ -14,6 +14,7 @@ describe Slang do
     o = "Hello world"
     puts o.type
     puts o.send(Protocols.lengthable, "length", [o] of Slang::Object)
+    puts o.send(Protocols.printable, "->string", [o] of Slang::Object)
   end
 
 end

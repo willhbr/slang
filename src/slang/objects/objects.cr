@@ -80,64 +80,130 @@ class Protocols
   def self.lengthable
     @@lengthable
   end
-end
-struct Int32
 
-end
-class StringType < Slang::Type
-  def initialize
-    super [] of String
-    @name = "String"
-    @implementations[Protocols.lengthable] = Slang::ProtocolImplementation.new({
-      "length" => Slang::CrystalFn.new("length") do |args|
-        no_error! args.first.as(String).size
-      end.as(Slang::Callable)
-    })
-  end
-
-  def self.instance
-    @@inst ||= StringType.new
+  @@printable = Slang::Protocol.new(["->string"])
+  def self.printable
+    @@printable
   end
 end
-class String
-  include Slang::CrystalSendable
-end
-struct Bool
+macro type(t, implement, use=:class)
+  {% name = (t.stringify + "Type").id %}
+  {% if use == :class %}
+    class {{ t }}
+      include Slang::CrystalSendable
+    end
+  {% else %}
+    struct {{ t }}
+      include Slang::CrystalSendable
+    end
+  {% end %}
+  class {{ name }} < Slang::Type
+    def initialize
+      super [] of String
+      @name = {{ t.stringify }}
+      @implementations = {{ implement }}
+    end
 
-end
-struct Atom
-
-end
-class Identifier
-
-end
-class Splice
-
-end
-class Function
-
-end
-class Callable
-
-end
-class Instance
-
-end
-class Regex
-
-end
-class NSes
-
-end
-class NS
-
-end
-struct Nil
-
-end
-struct Wrapper
-
+    def self.instance
+      @@inst ||= {{ name }}.new
+    end
+  end
 end
 
+type Int32, {
+  Protocols.printable => {
+    "->string" => Slang::CrystalFn.new("->string") { |args|
+      no_error! args.first.as(Int32).to_s
+    }.as(Slang::Callable)
+  }
+}, use: :struct 
 
-
+type String, {
+  Protocols.lengthable => {
+    "length" => Slang::CrystalFn.new("length") { |args|
+      no_error! args.first.as(String).size
+    }.as(Slang::Callable)
+  },
+  Protocols.printable => {
+    "->string" => Slang::CrystalFn.new("->string") { |args|
+      no_error! args.first.as(String).to_s
+    }.as(Slang::Callable)
+  }
+}
+type Bool, {
+  Protocols.printable => {
+    "->string" => Slang::CrystalFn.new("->string") { |args|
+      no_error! args.first.as(Bool).to_s
+    }.as(Slang::Callable)
+  }
+}, use: :struct 
+type Atom, {
+  Protocols.printable => {
+    "->string" => Slang::CrystalFn.new("->string") { |args|
+      no_error! args.first.as(Atom).to_s
+    }.as(Slang::Callable)
+  }
+}, use: :struct 
+type Identifier, {
+  Protocols.printable => {
+    "->string" => Slang::CrystalFn.new("->string") { |args|
+      no_error! args.first.as(Identifier).to_s
+    }.as(Slang::Callable)
+  }
+}, use: :class 
+type Splice, {
+  Protocols.printable => {
+    "->string" => Slang::CrystalFn.new("->string") { |args|
+      no_error! args.first.as(Splice).to_s
+    }.as(Slang::Callable)
+  }
+}, use: :class 
+type Function, {
+  Protocols.printable => {
+    "->string" => Slang::CrystalFn.new("->string") { |args|
+      no_error! args.first.as(Function).to_s
+    }.as(Slang::Callable)
+  }
+}, use: :class 
+type Callable, {
+  Protocols.printable => {
+    "->string" => Slang::CrystalFn.new("->string") { |args|
+      no_error! args.first.as(Callable).to_s
+    }.as(Slang::Callable)
+  }
+}, use: :class 
+type Instance, {
+  Protocols.printable => {
+    "->string" => Slang::CrystalFn.new("->string") { |args|
+      no_error! args.first.as(Instance).to_s
+    }.as(Slang::Callable)
+  }
+}, use: :class 
+type Regex, {
+  Protocols.printable => {
+    "->string" => Slang::CrystalFn.new("->string") { |args|
+      no_error! args.first.as(Regex).to_s
+    }.as(Slang::Callable)
+  }
+}, use: :class 
+type NSes, {
+  Protocols.printable => {
+    "->string" => Slang::CrystalFn.new("->string") { |args|
+      no_error! args.first.as(NSes).to_s
+    }.as(Slang::Callable)
+  }
+}, use: :class 
+type Nil, {
+  Protocols.printable => {
+    "->string" => Slang::CrystalFn.new("->string") { |args|
+      no_error! args.first.as(Nil).to_s
+    }.as(Slang::Callable)
+  }
+}, use: :struct 
+type Wrapper, {
+  Protocols.printable => {
+    "->string" => Slang::CrystalFn.new("->string") { |args|
+      no_error! args.first.as(Wrapper).to_s
+    }.as(Slang::Callable)
+  }
+}, use: :struct 

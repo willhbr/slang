@@ -23,6 +23,8 @@ module Slang
     end
   end
 
+  alias ProtocolImplementation = Hash(String, Callable)
+
   class Type < Callable
     property implementations = Hash(Protocol, ProtocolImplementation).new
     property name : String?
@@ -42,7 +44,7 @@ module Slang
 
     def dispatch_method(protocol, func, args)
       implementation = implementations[protocol]
-      implementation.call(func, args)
+      implementation[func].call(args)
     end
 
     def to_s(io)
@@ -56,16 +58,9 @@ module Slang
 
     def initialize(@methods)
     end
-  end
 
-  class ProtocolImplementation
-    property methods : Hash(String, Callable)
-
-    def initialize(@methods)
-    end
-
-    def call(func, args)
-      methods[func].call(args)
+    def describe(io)
+      io << name << methods
     end
   end
 
