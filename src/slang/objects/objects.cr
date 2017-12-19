@@ -31,6 +31,15 @@ module Slang
     def hash
       @value.hash
     end
+
+    def call(args)
+      first = args.first
+      if first.responds_to? :[]
+        {first[self], nil}
+      else
+        {nil, nil}
+      end
+    end
   end
 
   alias Object = (Int32 | String | Bool | Immutable::Vector(Object) | List |
@@ -238,3 +247,9 @@ type Wrapper, {
     }.as(Slang::Callable)
   }
 }, use: :struct 
+
+class String
+  def [](iden : Slang::Atom)
+    nil
+  end
+end

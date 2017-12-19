@@ -237,7 +237,7 @@ class Interpreter
 
     func = try! eval(ast.first, bindings, in_macro)
 
-    if func.is_a? Slang::Callable
+    if func.responds_to? :call
       values = ast.rest.map_to_arr do |arg|
         try! eval(arg, bindings, in_macro)
       end

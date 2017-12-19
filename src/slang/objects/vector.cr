@@ -36,6 +36,10 @@ module Slang
       to_s io
     end
 
+    def [](iden : Slang::Atom)
+      nil
+    end
+
     include Slang::CrystalSendable
     def type
       VectorType.instance

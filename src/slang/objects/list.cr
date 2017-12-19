@@ -119,7 +119,11 @@ module Slang
       nil
     end
 
-    def [](idx)
+    def [](iden : Slang::Atom)
+      nil
+    end
+
+    def [](idx : Int32)
       current = @head
       while current
         if idx == 0

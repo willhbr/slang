@@ -14,3 +14,5 @@
       doodle [1 2 3]]
   (println (Lengthable.length string))
   (println (Lengthable.length doodle)))
+
+(println (:foo {foo: "a"}))

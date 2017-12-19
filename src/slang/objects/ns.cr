@@ -63,6 +63,10 @@ class NS
     end
   end
 
+  def [](iden : Slang::Atom)
+    self[iden.value]
+  end
+
   def []?(iden : String)
     if var = @defs[iden]?
       return var
