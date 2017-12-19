@@ -62,6 +62,28 @@ module Slang
     def describe(io)
       io << name << methods
     end
+
+    def to_s(io)
+      io << @name
+    end
+
+    def get_method(func)
+      if methods.includes? func
+        Method.new self, func
+      else 
+        raise "#{@name} doesn't define #{func}"
+      end
+    end
+  end
+
+  class Method < Callable
+    def initialize(@protocol : Protocol, @func : String)
+    end
+    def call(args)
+      arg = args.first
+      raise "Can't call on #{arg}" unless arg.responds_to? :send
+      arg.send(@protocol, @func, args)
+    end
   end
 
   module CrystalSendable

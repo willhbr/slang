@@ -52,9 +52,11 @@ class NS
       return var
     end
     arr = iden.split('.')
-    raise "Can only have Module.var" if arr.size != 2
+    raise "Can only have Module.var, not #{iden}" if arr.size != 2
     mod, name = arr
-    if ns = @imported[mod]?
+    if (proto = @defs[mod]?) && proto.is_a? Slang::Protocol
+      return proto.get_method(name)
+    elsif ns = @imported[mod]?
       return ns[name]
     else
       raise "Unknown namespace #{mod}"
@@ -68,7 +70,9 @@ class NS
     arr = iden.split('.')
     return nil if arr.size != 2
     mod, name = arr
-    if ns = @imported[mod]?
+    if (proto = @defs[mod]?) && proto.is_a? Slang::Protocol
+      return proto.get_method(name)
+    elsif ns = @imported[mod]?
       return ns[name]?
     else
       nil

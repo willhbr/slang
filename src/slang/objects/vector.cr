@@ -31,5 +31,18 @@ module Slang
       end
       io << ']'
     end
+
+    include Slang::CrystalSendable
+    def type
+      VectorType.instance
+    end
+  end
+
+  class Immutable::Map(K, V)
+    include Slang::CrystalSendable
+
+    def type
+      MapType.instance
+    end
   end
 end

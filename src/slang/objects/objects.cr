@@ -28,7 +28,7 @@ module Slang
 
   alias Object = (Int32 | String | Bool | Immutable::Vector(Object) | List |
                   Immutable::Map(Object, Object) | Atom | Identifier | Splice |
-                  Function | Callable | Instance | Regex | NSes | NS | Nil | Wrapper)
+                  Function | Protocol | Callable | Instance | Regex | NSes | NS | Nil | Wrapper)
 
   alias Result = {Slang::Object, Slang::Error?}
 
@@ -75,16 +75,26 @@ module Slang
     end
   end
 end
+
 class Protocols
-  @@lengthable = Slang::Protocol.new(["length"])
-  def self.lengthable
-    @@lengthable
+  macro proto(name, methods)
+    @@{{ name }} = Slang::Protocol.new({{ methods }})
+    def self.{{ name }}
+      @@{{ name }}.name ||= {{ name.stringify.capitalize }}
+      @@{{ name }}
+    end
   end
 
-  @@printable = Slang::Protocol.new(["->string"])
-  def self.printable
-    @@printable
+  macro finished
+    ALL = [{% for proto in @type.class.methods %}
+      {% if proto.name != "allocate" %}
+        Protocols.{{ proto.name }},
+      {% end %}
+    {% end %}]
   end
+
+  proto lengthable, ["length"]
+  proto printable, ["->string"]
 end
 macro type(t, implement, use=:class)
   {% name = (t.stringify + "Type").id %}
@@ -118,6 +128,20 @@ type Int32, {
   }
 }, use: :struct 
 
+type Map, {
+  Protocols.lengthable => {
+    "length" => Slang::CrystalFn.new("length") { |args|
+      no_error! args.first.as(Slang::Map).size
+    }.as(Slang::Callable)
+  }
+}
+type Vector, {
+  Protocols.lengthable => {
+    "length" => Slang::CrystalFn.new("length") { |args|
+      no_error! args.first.as(Slang::Vector).size
+    }.as(Slang::Callable)
+  }
+}
 type String, {
   Protocols.lengthable => {
     "length" => Slang::CrystalFn.new("length") { |args|

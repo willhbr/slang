@@ -13,8 +13,16 @@ end
 class Lib::Runtime
   def self.new
     bind = Bindings.new
+
+
+    ns = NSes.new
+
+    Protocols::ALL.each do |proto|
+      ns[proto.name.as(String)] = proto
+    end
+    puts ns.current
     
-    bind = bind.set "*ns*", NSes.new.as(Slang::Object)
+    bind = bind.set "*ns*", ns.as(Slang::Object)
 
     func(bind, raise) do |args|
       error! args.first.to_s

@@ -97,6 +97,9 @@ class Scanner
           yield sym(:READER_MACRO)
         when '/'
           yield sym(:REGEX_LITERAL, regex)
+        when ';'
+          comment
+          next
         else
           if is_digit(char)
             yield sym(:NUMBER, number(char))
@@ -189,5 +192,11 @@ class Scanner
       buffer = buffer + char
     end
     buffer
+  end
+
+  def comment
+    while advance_when { |char| char != '\n' }
+    end
+    nil
   end
 end
