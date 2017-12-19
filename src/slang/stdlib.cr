@@ -14,7 +14,6 @@ class Lib::Runtime
   def self.new
     bind = Bindings.new
 
-
     ns = NSes.new
 
     Protocols::ALL.each do |proto|

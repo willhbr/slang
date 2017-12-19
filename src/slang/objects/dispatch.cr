@@ -17,8 +17,8 @@ module Slang
     end
 
     def to_s(io)
-      @type.to_s(io)
-      io << ": "
+      io << '#'
+      @type.to_s io
       @attributes.to_s(io)
     end
   end

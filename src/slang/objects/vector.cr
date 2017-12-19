@@ -21,7 +21,7 @@ module Slang
       end
     end
 
-    def to_s(io)
+    def to_s(io : IO)
       io << '['
       first = true
       each do |item|
@@ -30,6 +30,10 @@ module Slang
         item.to_s io
       end
       io << ']'
+    end
+
+    def inspect(io : IO)
+      to_s io
     end
 
     include Slang::CrystalSendable
@@ -43,6 +47,19 @@ module Slang
 
     def type
       MapType.instance
+    end
+
+    def to_s(io : IO)
+      io << '{'
+      first = true
+      each do |k, v|
+        io << ' ' unless first
+        first = false
+        k.to_s io
+        io << ' '
+        v.to_s io
+      end
+      io << '}'
     end
   end
 end
