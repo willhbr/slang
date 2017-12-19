@@ -144,10 +144,10 @@ class Interpreter
     if (first = ast.first) && first.is_a?(Slang::Identifier)
       case first.value
       when "type"
-        names = Array(String).new
+        names = Array(Slang::Atom).new
         ast.data.each do |attr|
           return error! "Attributes must be identifiers" unless attr.is_a? Slang::Identifier
-          names << attr.value
+          names << Slang::Atom.new(attr.value)
         end
         return no_error! Slang::Type.new names
       when "ns"

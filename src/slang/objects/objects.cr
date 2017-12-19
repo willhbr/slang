@@ -21,8 +21,15 @@ module Slang
     end
 
     def to_s(io)
-      io << ':'
-      io << @value
+      io << ':' << @value
+    end
+
+    def with_colon_suffix(io : IO)
+      io << @value << ':'
+    end
+
+    def hash
+      @value.hash
     end
   end
 
@@ -109,7 +116,7 @@ macro type(t, implement, use=:class)
   {% end %}
   class {{ name }} < Slang::Type
     def initialize
-      super [] of String
+      super [] of Slang::Atom
       @name = {{ t.stringify }}
       @implementations = {{ implement }}
     end

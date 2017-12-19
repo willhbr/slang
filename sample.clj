@@ -6,8 +6,8 @@
 
 (println Person)
 
-(let [people [(Person "Will" "Richardson")
-              (Person "John" "Smith")]]
+(let [people [#Person{first-name: "Will" last-name: "Richardson"}
+              #Person{first-name: "John" last-name: "Smith"}]]
   (println people))
 
 (let [string "Hello world"

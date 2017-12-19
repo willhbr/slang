@@ -1,10 +1,6 @@
 require "./func"
 
 module Slang
-  module Dispatchable
-    
-  end
-
   class Instance
     property type : Type
     property attributes : Slang::Map
@@ -28,18 +24,23 @@ module Slang
   class Type < Callable
     property implementations = Hash(Protocol, ProtocolImplementation).new
     property name : String?
-    getter attr_names : Array(String)
+    getter attr_names : Array(Atom)
 
     def initialize(@attr_names)
     end
 
     # This is the constructor, called like a function
     def call(values)
-      attrs = Hash(String, Object).new
-      @attr_names.each_with_index do |attr, idx|
-        attrs[attr] = values[idx]
+      first = values.first
+      if first.is_a? Slang::Map
+        {Instance.new(self, first), nil}
+      else
+        attrs = Hash(Atom, Object).new
+        @attr_names.each_with_index do |attr, idx|
+          attrs[attr] = values[idx]
+        end
+        {Instance.new(self, Slang::Map.new(attrs)), nil}
       end
-      {Instance.new(self, Slang::Map.new(attrs)), nil}
     end
 
     def dispatch_method(protocol, func, args)

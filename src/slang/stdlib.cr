@@ -19,7 +19,6 @@ class Lib::Runtime
     Protocols::ALL.each do |proto|
       ns[proto.name.as(String)] = proto
     end
-    puts ns.current
     
     bind = bind.set "*ns*", ns.as(Slang::Object)
 

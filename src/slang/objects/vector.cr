@@ -55,7 +55,11 @@ module Slang
       each do |k, v|
         io << ' ' unless first
         first = false
-        k.to_s io
+        if k.is_a? Slang::Atom
+          k.with_colon_suffix io
+        else
+          k.to_s io
+        end
         io << ' '
         v.to_s io
       end
