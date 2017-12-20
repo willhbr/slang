@@ -1,9 +1,12 @@
 require "./objects"
 
-macro try!(call)
+macro try!(call, location=nil)
   if %res = {{ call }}
     %value, %error = %res
-    if %error != nil
+    unless %error.nil?
+      {% if location != nil %}
+        %error.add_to_trace( {{ location }} )
+      {% end %}
       return {nil, %error}
     end
     %value

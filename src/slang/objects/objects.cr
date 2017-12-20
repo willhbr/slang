@@ -76,14 +76,18 @@ module Slang
   end
 
   class Error
-    property trace : Array(Identifier)    
+    property trace : Array(FileLocation)    
 
     def initialize(@message : String, cause : Identifier)
-      @trace = [] of Identifier
+      @trace = [] of FileLocation
     end
 
     def to_s(io)
       io << @message
+    end
+
+    def add_to_trace(location : FileLocation)
+      @trace.push location
     end
 
     def backtrace

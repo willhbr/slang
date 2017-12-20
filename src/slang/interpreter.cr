@@ -18,7 +18,8 @@ class Interpreter
     res = Array(Slang::Object).new
     ast.each do |node|
       expanded = try! expand_unquotes(node, bindings, in_macro)
-      expanded = try! eval(expanded, bindings, false) unless in_macro
+      # FIXME this shit is broken
+      # expanded = try! eval(expanded, bindings, false) unless in_macro
       if expanded.is_a? Slang::Splice
         expanded.into res
       else
@@ -95,7 +96,7 @@ class Interpreter
           ast.from(2).each do |node|
             body << try! expand_macros(node, bindings)
           end
-          return no_error! Slang::Macro.new(arguments, bindings, Slang::List.from(body), splat_arg)
+          return no_error! Slang::Macro.new(arguments, bindings, first.location, Slang::List.from(body), splat_arg)
         when "def"
           name = ast[1]
           raise "name must be identifier" unless name.is_a? Slang::Identifier
@@ -104,6 +105,9 @@ class Interpreter
           ns[name.value] = result
           if result.responds_to? :"name="
             result.name = name.value
+          end
+          if result.responds_to? :"location="
+            result.location = name.location
           end
           exp = Slang::List.create(first, name, result)
           return no_error! exp
@@ -155,25 +159,6 @@ class Interpreter
         raise "ns must be identifier" unless name.is_a? Slang::Identifier
         bindings["*ns*"].as(NSes).change_ns(name.value)
         return no_error! nil
-      when "let"
-        inner = bindings
-        binds = ast[1]
-        return error! "bindings must be a vector" unless binds.is_a? Slang::Vector
-        return error! "must give bindings in key-value pairs" unless binds.size % 2 == 0
-        binds.each_slice(2) do |assignment|
-          name, value = assignment
-          return error! "name must be identifier, got #{name}" unless name.is_a? Slang::Identifier
-          bind_put inner, name.value, try! eval(value, inner, in_macro)
-        end
-        bindings = inner
-        return no_error! ast.rest.each_return_last { |expr|
-          try! eval(expr, bindings, in_macro)
-        }
-      when "do"
-        return no_error! ast.rest.each_return_last { |expr|
-          try! eval(expr, bindings, in_macro)
-        }
-
       when "quote"
         return expand_unquotes(ast[1], bindings, in_macro)
       when "unquote"
@@ -192,6 +177,9 @@ class Interpreter
         ns[name.value] = result
         if result.responds_to? :"name="
           result.name = name.value
+        end
+        if result.responds_to? :"location="
+          result.location = name.location
         end
         return no_error! result
       when "fn" # TODO Move working out the args into a macro?
@@ -222,16 +210,7 @@ class Interpreter
           end
           arguments << arg
         end
-        return no_error! Slang::Function.new(arguments, bindings, ast.data.data, splat_arg, kwargs_arg)
-      when "if"
-        cond = try! eval(ast[1], bindings, in_macro)
-        if truthy? cond
-          return eval(ast[2], bindings, in_macro)
-        elsif other = ast[3]?
-          return eval(other, bindings, in_macro)
-        else
-          return no_error! nil
-        end
+        return no_error! Slang::Function.new(arguments, bindings, first.location, ast.data.data, splat_arg, kwargs_arg)
       end
     end
 

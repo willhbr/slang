@@ -29,8 +29,9 @@ module Slang
     property captured
     property body
     property name : String? = nil
+    property location : FileLocation
 
-    def initialize(@arg_names : Array(Identifier), @captured : Bindings,
+    def initialize(@arg_names : Array(Identifier), @captured : Bindings, @location,
                    @body : Slang::List, @splat_name : Identifier? = nil, @kw_name : Identifier? = nil)
     end
 
@@ -53,7 +54,7 @@ module Slang
       end
 
       return no_error! @body.each_return_last { |expr|
-        try! Interpreter.eval(expr, binds, false)
+        try! Interpreter.eval(expr, binds, false), @location
       }
     end
 
