@@ -119,14 +119,12 @@ class Parser
       key.parse_error "Unexpected EOF" if key && key.type == :EOF
       break if key.type == :"}"
       key_obj = object()
-      raise "Unexpected EOF" unless key_obj
 
       value = peek_sym?
       start.parse_error "Unexpected EOF" unless value
       value.parse_error "Unexpected EOF" if value && value.type == :EOF
       key.parse_error "Map literals must have an even number of elements" if key.type == :"}"
       value_obj = object()
-      raise "Unexpected EOF" unless value_obj
 
       into[key_obj] = value_obj
     end

@@ -69,13 +69,6 @@ module Slang
     end
   end
 
-  struct Wrapper
-    property value : Bool | Nil
-
-    def initialize(@value)
-    end
-  end
-
   class Error
     property trace : Array(Identifier | FileLocation)    
 

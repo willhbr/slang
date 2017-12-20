@@ -129,8 +129,6 @@ class Interpreter
         result[try! expand_macros(k, bindings)] = try! expand_macros(v, bindings)
       end
       return no_error! Slang::Map.new result
-    when Slang::Wrapper
-      return no_error! ast.value
     else
       no_error! ast
     end
