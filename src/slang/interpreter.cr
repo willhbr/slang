@@ -170,7 +170,7 @@ class Interpreter
         return no_error! Slang::Splice.new(inner)
 
       when "raise"
-        return error! ast[1].to_s, first
+        return error! try!(eval(ast[1], bindings, in_macro)).to_s, first
       when "def"
         name = ast[1]
         return error! "name must be identifier" unless name.is_a? Slang::Identifier
