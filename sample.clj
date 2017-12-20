@@ -3,6 +3,10 @@
 (ns Foo
   )
 
+(Global.defn foo [] "a")
+
+(println (foo))
+
 (def bar 5)
 
 (println bar)

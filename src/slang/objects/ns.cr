@@ -76,6 +76,7 @@ class NS
 
   def []?(iden : Slang::Identifier)
     if mod = iden.mod
+      name = iden.value
       if (proto = @defs[mod]?) && proto.is_a? Slang::Protocol
         return proto.get_method(name)
       elsif ns = @imported[mod]?
