@@ -169,6 +169,8 @@ class Interpreter
         inner = try! eval(ast[1], bindings, in_macro)
         return no_error! Slang::Splice.new(inner)
 
+      when "raise"
+        return error! ast[1].to_s, first
       when "def"
         name = ast[1]
         return error! "name must be identifier" unless name.is_a? Slang::Identifier
@@ -220,7 +222,7 @@ class Interpreter
       values = ast.rest.map_to_arr do |arg|
         try! eval(arg, bindings, in_macro)
       end
-      func.call(values)
+      no_error! try!(func.call(values), first)
     else
       return error! "Can't call non-function" unless func.is_a? Slang::CrystalFn
       return func.call(ast.data.map_to_arr { |expr| try! eval(expr, bindings, in_macro) })

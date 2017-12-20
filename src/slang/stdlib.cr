@@ -22,10 +22,6 @@ class Lib::Runtime
     
     bind = bind.set "*ns*", ns.as(Slang::Object)
 
-    func(bind, raise) do |args|
-      error! args.first.to_s
-    end
-        
     func(bind, println) do |args|
       puts args.join(" ")
       no_error! nil

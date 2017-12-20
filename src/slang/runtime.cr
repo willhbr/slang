@@ -5,7 +5,7 @@ macro try!(call, location=nil)
     %value, %error = %res
     unless %error.nil?
       {% if location != nil %}
-        %error.add_to_trace( {{ location }} )
+        %error.add_to_trace( {{ location }} ) if {{ location }}.is_a? FileLocation || {{ location }}.is_a? Slang::Identifier
       {% end %}
       return {nil, %error}
     end
@@ -19,6 +19,10 @@ macro no_error!(call)
   { {{ call }}, nil}
 end
 
-macro error!(message)
-  {nil, Slang::Error.new({{ message }}, Slang::Identifier.new FileLocation["th", 1, 2], "Stuff")}
+macro error!(message, cause=nil)
+  {% if cause == nil %}
+    {nil, Slang::Error.new({{ message }}, Slang::Identifier.new FileLocation["th", 1, 2], "Stuff")}
+  {% else %}
+    {nil, Slang::Error.new({{ message }}, {{ cause }}.location)}
+  {% end %}
 end
