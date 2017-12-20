@@ -1,9 +1,14 @@
 require "./objects"
 
+class ExpectedEOF < Exception
+end
+
+class UnexpectedEOF < Exception
+end
+
 class Parser
   @finished = false
   @peeked : Token? = nil
-
 
   def initialize(&@retriever : ->Token?)
   end
@@ -35,16 +40,19 @@ class Parser
   def parse
     program = Array(Slang::Object).new
     loop do
-      obj = object()
-      break unless obj
-      program << obj
+      begin
+        obj = object()
+        program << obj
+      rescue ExpectedEOF
+        break
+      end
     end
     program
   end
 
   def object
     sym = pop_sym?
-    return nil unless sym
+    raise ExpectedEOF.new unless sym
     case sym.type
     when :"("
       list sym, :")", Slang::List
@@ -54,11 +62,11 @@ class Parser
       map(sym)
     when :"'", :"`"
       o = object
-      return nil unless o
+      raise UnexpectedEOF.new unless o
       Slang::List.quoted sym.location, o
     when :"~"
       o = object
-      return nil unless o
+      raise UnexpectedEOF.new unless o
       Slang::List.unquoted sym.location, o
     when :"~@"
       o = object
@@ -75,7 +83,7 @@ class Parser
     when :ATOM
       atom(sym)
     when :EOF
-      nil
+      raise ExpectedEOF.new
     else
       sym.parse_error "Syntax error: unexpected #{sym.type} '#{sym.value}'"
     end
@@ -130,22 +138,27 @@ class Parser
     value = token.value.as(String)
     case value
     when "nil"
-      Slang::Wrapper.new nil
+      nil
     when "true"
-      Slang::Wrapper.new true
+      true
     when "false"
-      Slang::Wrapper.new false
+      false
     else
-      Slang::Identifier.new token.location, value
+      mod, _dot, var = value.partition('.')
+      if var.empty?
+        Slang::Identifier.new token.location, mod
+      else
+        Slang::Identifier.new token.location, var, mod
+      end
     end
   end
 
   def reader_macro
     sym = pop_sym?
-    raise "Unexpected EOF" unless sym
+    raise UnexpectedEOF.new unless sym
     case sym.type
     when :IDENTIFIER
-      name = Slang::Identifier.new sym.location, sym.value.as(String)
+      name = identifier sym
       rest = reader_subject
       Slang::List.create name, rest
     else
@@ -155,7 +168,7 @@ class Parser
 
   def reader_subject
     sym = pop_sym?
-    raise "Unexpected EOF" unless sym
+    raise UnexpectedEOF.new unless sym
     case sym.type
     when :"["
       list sym, :"]", Slang::Vector

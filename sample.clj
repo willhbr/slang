@@ -1,7 +1,5 @@
 (def defn (macro [n a & b] '(def ~n (fn ~a ~@b))))
 
-(def dood (macro []
-                 (raise "compile time error!")
-                 5))
+(def Person (type first-name))
 
-(dood)
+(println #Person{first-name: "Will"})

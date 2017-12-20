@@ -3,10 +3,11 @@ require "immutable"
 module Slang
 
   class Identifier
+    property mod : String?
     property value : String
     property location : FileLocation
 
-    def initialize(@location, @value)
+    def initialize(@location, @value, @mod = nil)
     end
 
     def to_s(io)
