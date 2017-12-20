@@ -9,8 +9,16 @@ class Runner
     @compile_time = Lib::CompileTime.new
   end
 
+  def read_from(string)
+    parse Scanner.from_string(string)
+  end
+
   def read(file)
-    toks = Scanner.new(file).tokens
+    parse Scanner.from_file(file)
+  end
+
+  private def parse(scanner)
+    toks = scanner.tokens
     i = -1
     p = Parser.new do
       i += 1

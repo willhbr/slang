@@ -94,16 +94,16 @@ class Parser
     loop do
       sym = peek_sym?
       unless sym
-        start.parse_error "Unexpected EOF"
+        raise UnexpectedEOF.new
       end
       if sym && sym.type == :EOF
-        sym.parse_error "Unexpected EOF"
+        raise UnexpectedEOF.new
       end
       break if sym.type == terminator
 
       value = object()
       unless value
-        raise "Unexpected EOF"
+        raise UnexpectedEOF.new
       end
       into << value
     end
@@ -115,14 +115,14 @@ class Parser
     into = Hash(Slang::Object, Slang::Object).new
     loop do
       key = peek_sym?
-      start.parse_error "Unexpected EOF" unless key
-      key.parse_error "Unexpected EOF" if key && key.type == :EOF
+      raise UnexpectedEOF.new unless key
+      raise UnexpectedEOF.new if key && key.type == :EOF
       break if key.type == :"}"
       key_obj = object()
 
       value = peek_sym?
-      start.parse_error "Unexpected EOF" unless value
-      value.parse_error "Unexpected EOF" if value && value.type == :EOF
+      raise UnexpectedEOF.new unless value
+      raise UnexpectedEOF.new if value && value.type == :EOF
       key.parse_error "Map literals must have an even number of elements" if key.type == :"}"
       value_obj = object()
 

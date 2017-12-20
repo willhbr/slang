@@ -7,8 +7,15 @@ class Scanner
   @current = '\0'
   @peeked : Char? = nil
 
-  def initialize(@file_path : String)
-    @input = File.open(@file_path)
+  def self.from_file(file_path : String)
+    new(file_path, File.open(file_path))
+  end
+
+  def self.from_string(string)
+    new(string, IO::Memory.new(string.to_slice))
+  end
+
+  def initialize(@file_path : String, @input : IO)
   end
 
   private def advance_idx
