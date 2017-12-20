@@ -2,7 +2,7 @@ require "immutable"
 
 module Slang
 
-  class Identifier
+  struct Identifier
     property mod : String?
     property value : String
     property location : FileLocation
@@ -11,7 +11,14 @@ module Slang
     end
 
     def to_s(io)
+      if m = mod
+        io << mod << '.'
+      end
       io << @value
+    end
+
+    def hash
+      mod.hash ^ value.hash
     end
   end
 

@@ -1,5 +1,12 @@
 (def defn (macro [n a & b] '(def ~n (fn ~a ~@b))))
 
-(def Person (type first-name))
+(ns Foo
+  )
 
-(println #Person{first-name: "Will"})
+(def bar 5)
+
+(println bar)
+
+(ns Bar)
+
+(println Foo.bar)

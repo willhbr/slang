@@ -6,11 +6,11 @@ macro bind_put(var, key, value)
 end
 
 macro lookup(bindings, key)
-  ({{ bindings }}[{{ key }}]? || {{ bindings }}["*ns*"].as(NSes)[{{ key }}])
+  ({{ bindings }}[{{ key }}.value]? || {{ bindings }}["*ns*"].as(NSes)[{{ key }}])
 end
 
 macro lookup?(bindings, key)
-  ({{ bindings }}[{{ key }}]? || {{ bindings }}["*ns*"].as(NSes)[{{ key }}]?)
+  ({{ bindings }}[{{ key }}.value]? || {{ bindings }}["*ns*"].as(NSes)[{{ key }}]?)
 end
 
 class Interpreter
@@ -112,7 +112,7 @@ class Interpreter
           exp = Slang::List.create(first, name, result)
           return no_error! exp
         else
-          mac = lookup?(bindings, first.value)
+          mac = lookup?(bindings, first)
           if mac && (mac.is_a?(Slang::Macro) || mac.is_a?(Slang::CrystalMacro))
             values = ast.data.map_to_arr &.itself
             return no_error! try!(mac.call(values), first)
@@ -238,7 +238,7 @@ class Interpreter
       end
       no_error! Slang::Map.new(result)
     when Slang::Identifier
-      no_error! lookup(bindings, ast.value)
+      no_error! lookup(bindings, ast)
     else
       no_error! ast
     end

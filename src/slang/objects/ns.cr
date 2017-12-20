@@ -6,7 +6,7 @@ class NSes
   property current = NS.global
   property nses = Hash(String, NS).new
 
-  delegate :[], :[]?, :[]=, to: @current
+  delegate :[]?, :[], :[]=, to: @current
 
   def initialize
     nses[current.name] = current
@@ -47,19 +47,18 @@ class NS
     @imported[ns.name] = ns
   end
 
-  def [](iden : String)
-    if var = @defs[iden]?
-      return var
-    end
-    arr = iden.split('.')
-    raise "Can only have Module.var, not #{iden}" if arr.size != 2
-    mod, name = arr
-    if (proto = @defs[mod]?) && proto.is_a? Slang::Protocol
-      return proto.get_method(name)
-    elsif ns = @imported[mod]?
-      return ns[name]
+  def [](iden : Slang::Identifier)
+    if mod = iden.mod
+      name = iden.value
+      if (proto = @defs[mod]?) && proto.is_a? Slang::Protocol
+        return proto.get_method(name)
+      elsif ns = @imported[mod]?
+        return ns[name]
+      else
+        raise "Unknown namespace #{mod}"
+      end
     else
-      raise "Unknown namespace #{mod}"
+      @defs[iden.value]? || raise "Unknown var #{iden}"
     end
   end
 
@@ -67,19 +66,25 @@ class NS
     self[iden.value]
   end
 
+  def [](iden : String)
+    @defs[iden]
+  end
+
   def []?(iden : String)
-    if var = @defs[iden]?
-      return var
-    end
-    arr = iden.split('.')
-    return nil if arr.size != 2
-    mod, name = arr
-    if (proto = @defs[mod]?) && proto.is_a? Slang::Protocol
-      return proto.get_method(name)
-    elsif ns = @imported[mod]?
-      return ns[name]?
+    @defs[iden]?
+  end
+
+  def []?(iden : Slang::Identifier)
+    if mod = iden.mod
+      if (proto = @defs[mod]?) && proto.is_a? Slang::Protocol
+        return proto.get_method(name)
+      elsif ns = @imported[mod]?
+        return ns[name]?
+      else
+        nil
+      end
     else
-      nil
+      @defs[iden.value]?
     end
   end
 
