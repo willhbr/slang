@@ -1,16 +1,10 @@
 (def defn (macro [n a & b] '(def ~n (fn ~a ~@b))))
 
-(ns Foo
-  )
+(defn map [coll f]
+  (Enumerable.reduce coll '()
+                     (fn [acc item]
+                       (conj acc (f item)))))
 
-(Global.defn foo [] "a")
+(println (map [1 2 3] (fn [a] (* 2 a))))
 
-(println (foo))
-
-(def bar 5)
-
-(println bar)
-
-(ns Bar)
-
-(println Foo.bar)
+(println (Enumerable.reduce '(1 2 3) 0 +))

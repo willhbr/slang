@@ -21,7 +21,7 @@ module Slang
   class CrystalMacro < CrystalFn
   end
 
-  class Function
+  class Function < Callable
     property arg_names
     property splat_name
     # TODO this doesn't do anything

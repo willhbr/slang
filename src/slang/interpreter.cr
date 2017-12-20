@@ -34,6 +34,7 @@ class Interpreter
     when Slang::Vector
       expand_with_splice_quotes(ast, bindings, Slang::Vector, in_macro)
     when Slang::List
+      return no_error! ast if ast.empty?
       if (first = ast.first) && first.is_a?(Slang::Identifier) && first.value == "unquote"
         expand_and_eval(ast[1], bindings, in_macro)
       elsif (first = ast.first) && first.is_a?(Slang::Identifier) && first.value == "unquote-splice"

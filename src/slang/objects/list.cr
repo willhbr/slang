@@ -1,5 +1,11 @@
+require "./types"
+
 module Slang
   class List
+    include Slang::CrystalSendable
+    def type
+      ListType.instance
+    end
     property head : Node? = nil
 
     def initialize(eachable)
@@ -145,6 +151,20 @@ module Slang
         current = current.rest
       end
       List.new
+    end
+
+    def conjed(item)
+      List.new Node.new(item, @head)
+    end
+
+    def size
+      current = @head
+      s = 0
+      while current
+        s += 1
+        current = current.rest
+      end
+      s
     end
 
     def to_s(io)

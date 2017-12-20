@@ -44,7 +44,7 @@ module Slang
     end
 
     def dispatch_method(protocol, func, args)
-      implementation = implementations[protocol]
+      implementation = implementations[protocol]? || raise "#{@name} doesn't implement #{protocol.name}"
       implementation[func].call(args)
     end
 

@@ -27,6 +27,19 @@ class Lib::Runtime
       no_error! nil
     end
 
+    func(bind, conj) do |args|
+      first = args.first
+      if first.is_a? Slang::List
+        no_error! first.conjed(args[1])
+      # elsif first.is_a? Slang::Vector
+      #   vec = first.push(args[1].as(Slang::Object))
+      #   no_error! vec
+      else
+        error! "can't add to #{first}"
+      end
+    end
+
+
     func(bind, first) do |args|
       a = args[0]
       next error! "Can't get first of non-list" unless a.is_a? Slang::List
@@ -82,33 +95,6 @@ class Lib::Runtime
         no_error! a * b
       else
         error! "Can't multiply that business"
-      end
-    end
-
-    func(bind, reduce) do |args|
-      if args.size == 2
-        func = args[0].as(Slang::Function)
-        coll = args[1]
-        next error! "Can't iterate on #{coll}" unless coll.responds_to? :each
-        prev = nil
-        coll.each do |item|
-          if prev.nil?
-            prev = item
-          else
-            prev, error = func.call([prev.as(Slang::Object), item.as(Slang::Object)])
-          end
-        end
-        no_error! prev.as(Slang::Object)
-      else
-        func = args[0].as(Slang::Function)
-        default = args[1]
-        coll = args[2]
-        next error! "Can't iterate on #{coll}" unless coll.responds_to? :each
-        prev = default
-        coll.each do |item|
-          prev, error = func.call([prev.as(Slang::Object), item.as(Slang::Object)])
-        end
-        no_error! prev.as(Slang::Object)
       end
     end
     bind
