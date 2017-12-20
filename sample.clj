@@ -1,6 +1,7 @@
 (def defn (macro [n a & b] '(def ~n (fn ~a ~@b))))
 
-(defn error-fn [a]
-  (raise a))
+(def dood (macro []
+                 (raise "compile time error!")
+                 5))
 
-(error-fn "Oh shit son")
+(dood)

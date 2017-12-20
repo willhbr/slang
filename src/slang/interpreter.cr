@@ -115,7 +115,7 @@ class Interpreter
           mac = lookup?(bindings, first.value)
           if mac && (mac.is_a?(Slang::Macro) || mac.is_a?(Slang::CrystalMacro))
             values = ast.data.map_to_arr &.itself
-            return mac.call(values)
+            return no_error! try!(mac.call(values), first)
           else
             return no_error! ast.map { |a| try! expand_macros(a, bindings) }
           end
