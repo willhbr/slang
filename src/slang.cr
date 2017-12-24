@@ -1,13 +1,7 @@
 require "./slang/*"
 
-class Runner
-  property runtime : Bindings
-  property compile_time : Bindings
-
-  def initialize
-    @runtime = Lib::Runtime.new
-    @compile_time = Lib::CompileTime.new
-  end
+module SlangRunner
+  extend self
 
   def read_from(string)
     parse Scanner.from_string(string)
@@ -27,10 +21,10 @@ class Runner
     p.parse
   end
 
-  def compile(program)
+  def compile(bindings, program)
     res = [] of Slang::Object
     program.each do |expr|
-      val, err = Interpreter.expand_macros(expr, @compile_time)
+      val, err = Interpreter.expand_macros(expr, bindings)
       if err
         puts err
         return
@@ -40,11 +34,11 @@ class Runner
     res
   end
 
-  def execute(program)
+  def execute(bindings, program)
     return unless program
     res = nil
     program.each do |expr|
-      res, err = Interpreter.eval(expr, @runtime, false)
+      res, err = Interpreter.eval(expr, bindings, false)
       if err
         puts err
         return
