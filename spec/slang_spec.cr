@@ -4,10 +4,11 @@ describe Slang do
   # TODO: Write tests
 
   it "runs a file" do
-    r = Runner.new
-    tree = r.read "./spec/test.clj"
-    tree = r.compile tree
-    r.execute tree
+    comp = Lib::CompileTime.new
+    run = Lib::Runtime.new
+    tree = SlangRunner.read "./spec/test.clj"
+    tree = SlangRunner.compile comp, tree
+    SlangRunner.execute run, tree
   end
 
   it "calls a protocol method" do
