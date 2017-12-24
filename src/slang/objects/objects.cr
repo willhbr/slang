@@ -43,9 +43,9 @@ module Slang
     def call(args)
       first = args.first
       if first.responds_to? :[]
-        {first[self], nil}
+        first[self]
       else
-        {nil, nil}
+        nil
       end
     end
   end
@@ -54,7 +54,7 @@ module Slang
                   Immutable::Map(Object, Object) | Atom | Identifier | Splice |
                   Function | Protocol | Callable | Instance | Regex | NSes | NS | Nil)
 
-  alias Result = {Slang::Object, Slang::Error?}
+  alias Result = Slang::Object
 
   class Splice
     def initialize(@body : Object)
@@ -76,7 +76,7 @@ module Slang
     end
   end
 
-  class Error
+  class Error < Exception
     property trace : Array(Identifier | FileLocation)    
 
     def initialize(@message : String, cause)

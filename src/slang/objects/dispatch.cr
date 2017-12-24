@@ -33,13 +33,13 @@ module Slang
     def call(values)
       first = values.first
       if first.is_a? Slang::Map
-        {Instance.new(self, first), nil}
+        Instance.new(self, first)
       else
         attrs = Hash(Atom, Object).new
         @attr_names.each_with_index do |attr, idx|
           attrs[attr] = values[idx]
         end
-        {Instance.new(self, Slang::Map.new(attrs)), nil}
+        Instance.new(self, Slang::Map.new(attrs))
       end
     end
 

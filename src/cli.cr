@@ -13,7 +13,7 @@ class Prompter
 
   def read
     so_far = ""
-    prompt = "> "
+    prompt = "|> "
     loop do
       if line = readline prompt, true
         so_far += line
@@ -21,24 +21,31 @@ class Prompter
         exit # TODO do this more better
       end
       begin
-        tree = SlangRunner.read_from so_far
+        tree = SlangRunner.read_from "repl", so_far
         return tree
       rescue UnexpectedEOF
-        prompt = "* "
+        prompt = "||> "
       end
     end
   end
 
   def eval(tree)
-    tree = SlangRunner.compile @@compile, tree
-    SlangRunner.execute @@run, tree
+    begin
+      tree = SlangRunner.compile @@compile, tree
+      SlangRunner.execute @@run, tree
+    rescue e : Slang::Error
+      puts e
+    rescue compiler_failed
+      puts "COMPILER FAILED:"
+      puts compiler_failed.inspect_with_backtrace
+    end
   end
 
   def repl
     loop do
       tree = read
       res = eval(tree)
-      puts "-> #{res}"
+      puts "=> #{res}" if res
     end
   end
 end

@@ -11,8 +11,8 @@ class Scanner
     new(file_path, File.open(file_path))
   end
 
-  def self.from_string(string)
-    new(string, IO::Memory.new(string.to_slice))
+  def self.from_string(name, string)
+    new(name, IO::Memory.new(string.to_slice))
   end
 
   def initialize(@file_path : String, @input : IO)

@@ -64,10 +64,9 @@ type Map, {
       func = args[2].as(Slang::Callable)
       err = nil
       map.each do |k, v|
-        acc, err = func.call([acc, Slang::Vector.new([k, v] of Slang::Object)] of Slang::Object)
-        break if err
+        acc = func.call([acc, Slang::Vector.new([k, v] of Slang::Object)] of Slang::Object)
       end
-      {acc, err}
+      acc
     }.as(Slang::Callable)
   }
 }
@@ -84,10 +83,9 @@ type Vector, {
       func = args[2].as(Slang::Callable)
       err = nil
       vec.each do |item|
-        acc, err = func.call([acc, item] of Slang::Object)
-        break if err
+        acc = func.call([acc, item] of Slang::Object)
       end
-      {acc, err}
+      acc
     }.as(Slang::Callable)
   }
 }
@@ -194,10 +192,9 @@ type List, {
       func = args[2].as(Slang::Callable)
       err = nil
       list.each do |item|
-        acc, err = func.call([acc, item] of Slang::Object)
-        break if err
+        acc = func.call([acc, item] of Slang::Object)
       end
-      {acc, err}
+      acc
     }.as(Slang::Callable)
   }
 }

@@ -13,6 +13,10 @@ struct FileLocation
   def to_s(io)
     io << @line << ':' << @column << ' ' << @file
   end
+
+  def self.native
+    FileLocation.new {{ __FILE__ }}, 0, 0
+  end
 end
 
 struct Token

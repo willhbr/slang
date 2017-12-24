@@ -3,8 +3,8 @@ require "./slang/*"
 module SlangRunner
   extend self
 
-  def read_from(string)
-    parse Scanner.from_string(string)
+  def read_from(name, string)
+    parse Scanner.from_string(name, string)
   end
 
   def read(file)
@@ -24,11 +24,7 @@ module SlangRunner
   def compile(bindings, program)
     res = [] of Slang::Object
     program.each do |expr|
-      val, err = Interpreter.expand_macros(expr, bindings)
-      if err
-        puts err
-        return
-      end
+      val = Interpreter.expand_macros(expr, bindings)
       res << val
     end
     res
@@ -38,11 +34,7 @@ module SlangRunner
     return unless program
     res = nil
     program.each do |expr|
-      res, err = Interpreter.eval(expr, bindings, false)
-      if err
-        puts err
-        return
-      end
+      res = Interpreter.eval(expr, bindings, false)
     end
     res
   end
