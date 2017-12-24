@@ -96,7 +96,7 @@ class Scanner
         when ':'
           iden = identifier("")
           yield sym(:ATOM, iden)
-        when ' ', '\t', '\n'
+        when ' ', '\t', '\n', ','
           next
         when '"'
           yield sym(:STRING, string)
@@ -146,7 +146,6 @@ class Scanner
     '?',
     '/',
     '.',
-    ',',
     '|',
     '!',
     '$',

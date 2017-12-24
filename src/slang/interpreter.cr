@@ -18,8 +18,6 @@ class Interpreter
     res = Array(Slang::Object).new
     ast.each do |node|
       expanded = try! expand_unquotes(node, bindings, in_macro)
-      # FIXME this shit is broken
-      # expanded = try! eval(expanded, bindings, false) unless in_macro
       if expanded.is_a? Slang::Splice
         expanded.into res
       else
@@ -231,7 +229,11 @@ class Interpreter
   def self.eval_node(ast : Slang::Object, bindings, in_macro) : Slang::Result
     return case ast
     when Slang::Vector
-      expand_with_splice_quotes(ast, bindings, Slang::Vector, in_macro)
+      expanded = try!(expand_with_splice_quotes(ast, bindings, Slang::Vector, in_macro)).as(Slang::Vector)
+      expanded.each_with_index do |item, idx|
+        expanded = expanded.set(idx, try! eval(item, bindings, in_macro))
+      end
+      return no_error! expanded
     when Slang::Map
       result = Hash(Slang::Object, Slang::Object).new
       ast.each do |key, value|      
