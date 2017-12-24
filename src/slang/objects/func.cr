@@ -53,8 +53,8 @@ module Slang
         bind_put binds, splat.value, Slang::Vector.from(rest)
       end
 
-      return no_error! @body.each_return_last { |expr|
-        try! Interpreter.eval(expr, binds, false), @location
+      return @body.each_return_last { |expr|
+        trace Interpreter.eval(expr, binds, false), @location
       }
     end
 

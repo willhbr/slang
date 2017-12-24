@@ -24,16 +24,16 @@ class Lib::Runtime
 
     func(bind, println) do |args|
       puts args.join(" ")
-      no_error! nil
+      nil
     end
 
     func(bind, conj) do |args|
       first = args.first
       if first.is_a? Slang::List
-        no_error! first.conjed(args[1])
+        first.conjed(args[1])
       # elsif first.is_a? Slang::Vector
       #   vec = first.push(args[1].as(Slang::Object))
-      #   no_error! vec
+      #   vec
       else
         error! "can't add to #{first}"
       end
@@ -43,24 +43,24 @@ class Lib::Runtime
     func(bind, first) do |args|
       a = args[0]
       next error! "Can't get first of non-list" unless a.is_a? Slang::List
-      next no_error!(nil) if a.empty?
-      no_error! a.first
+      next nil if a.empty?
+      a.first
     end
 
     func(bind, rest) do |args|
       a = args[0]
       next error! "Can't get rest of non-list" unless a.is_a? Slang::List
-      next no_error!(a) if a.empty?
-      no_error! a.data
+      next a if a.empty?
+      a.data
     end
 
     func(bind, :<=) do |args|
       a = args[0]
       b = args[1]
       if a.is_a?(Int32) && b.is_a?(Int32)
-        no_error! a <= b
+        a <= b
       elsif a.is_a?(String) && b.is_a?(String)
-        no_error! a <= b
+        a <= b
       else
         next error! "Can't compare that business"
       end
@@ -70,9 +70,9 @@ class Lib::Runtime
       a = args[0]
       b = args[1]
       if a.is_a?(Int32) && b.is_a?(Int32)
-        no_error! a + b
+        a + b
       elsif a.is_a?(String) && b.is_a?(String)
-        no_error! a + b
+        a + b
       else
        next error! "Can't add that business"
       end
@@ -82,7 +82,7 @@ class Lib::Runtime
       a = args[0]
       b = args[1]
       if a.is_a?(Int32) && b.is_a?(Int32)
-        no_error! a - b
+        a - b
       else
         next error! "Can't subtract that business"
       end
@@ -92,7 +92,7 @@ class Lib::Runtime
       a = args[0]
       b = args[1]
       if a.is_a?(Int32) && b.is_a?(Int32)
-        no_error! a * b
+        a * b
       else
         error! "Can't multiply that business"
       end

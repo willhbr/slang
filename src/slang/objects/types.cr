@@ -46,7 +46,7 @@ end
 type Int32, {
   Protocols.printable => {
     "->string" => Slang::CrystalFn.new("->string") { |args|
-      no_error! args.first.as(Int32).to_s
+      args.first.as(Int32).to_s
     }.as(Slang::Callable)
   }
 }, use: :struct
@@ -54,7 +54,7 @@ type Int32, {
 type Map, {
   Protocols.lengthable => {
     "length" => Slang::CrystalFn.new("length") { |args|
-      no_error! args.first.as(Slang::Map).size
+      args.first.as(Slang::Map).size
     }.as(Slang::Callable)
   },
   Protocols.enumerable => {
@@ -73,7 +73,7 @@ type Map, {
 type Vector, {
   Protocols.lengthable => {
     "length" => Slang::CrystalFn.new("length") { |args|
-      no_error! args.first.as(Slang::Vector).size
+      args.first.as(Slang::Vector).size
     }.as(Slang::Callable)
   },
   Protocols.enumerable => {
@@ -92,89 +92,89 @@ type Vector, {
 type String, {
   Protocols.lengthable => {
     "length" => Slang::CrystalFn.new("length") { |args|
-      no_error! args.first.as(String).size
+      args.first.as(String).size
     }.as(Slang::Callable)
   },
   Protocols.printable => {
     "->string" => Slang::CrystalFn.new("->string") { |args|
-      no_error! args.first.as(String).to_s
+      args.first.as(String).to_s
     }.as(Slang::Callable)
   }
 }
 type Bool, {
   Protocols.printable => {
     "->string" => Slang::CrystalFn.new("->string") { |args|
-      no_error! args.first.as(Bool).to_s
+      args.first.as(Bool).to_s
     }.as(Slang::Callable)
   }
 }, use: :struct
 type Atom, {
   Protocols.printable => {
     "->string" => Slang::CrystalFn.new("->string") { |args|
-      no_error! args.first.as(Atom).to_s
+      args.first.as(Atom).to_s
     }.as(Slang::Callable)
   }
 }, use: :struct
 type Identifier, {
   Protocols.printable => {
     "->string" => Slang::CrystalFn.new("->string") { |args|
-      no_error! args.first.as(Identifier).to_s
+      args.first.as(Identifier).to_s
     }.as(Slang::Callable)
   }
 }, use: :class
 type Splice, {
   Protocols.printable => {
     "->string" => Slang::CrystalFn.new("->string") { |args|
-      no_error! args.first.as(Splice).to_s
+      args.first.as(Splice).to_s
     }.as(Slang::Callable)
   }
 }, use: :class
 type Function, {
   Protocols.printable => {
     "->string" => Slang::CrystalFn.new("->string") { |args|
-      no_error! args.first.as(Function).to_s
+      args.first.as(Function).to_s
     }.as(Slang::Callable)
   }
 }, use: :class
 type Callable, {
   Protocols.printable => {
     "->string" => Slang::CrystalFn.new("->string") { |args|
-      no_error! args.first.as(Callable).to_s
+      args.first.as(Callable).to_s
     }.as(Slang::Callable)
   }
 }, use: :class
 type Instance, {
   Protocols.printable => {
     "->string" => Slang::CrystalFn.new("->string") { |args|
-      no_error! args.first.as(Instance).to_s
+      args.first.as(Instance).to_s
     }.as(Slang::Callable)
   }
 }, use: :class
 type Regex, {
   Protocols.printable => {
     "->string" => Slang::CrystalFn.new("->string") { |args|
-      no_error! args.first.as(Regex).to_s
+      args.first.as(Regex).to_s
     }.as(Slang::Callable)
   }
 }, use: :class
 type NSes, {
   Protocols.printable => {
     "->string" => Slang::CrystalFn.new("->string") { |args|
-      no_error! args.first.as(NSes).to_s
+      args.first.as(NSes).to_s
     }.as(Slang::Callable)
   }
 }, use: :class
 type Nil, {
   Protocols.printable => {
     "->string" => Slang::CrystalFn.new("->string") { |args|
-      no_error! args.first.as(Nil).to_s
+      args.first.as(Nil).to_s
     }.as(Slang::Callable)
   }
 }, use: :struct
 type Wrapper, {
   Protocols.printable => {
     "->string" => Slang::CrystalFn.new("->string") { |args|
-      no_error! args.first.as(Wrapper).to_s
+      args.first.as(Wrapper).to_s
     }.as(Slang::Callable)
   }
 }, use: :struct
@@ -182,7 +182,7 @@ type Wrapper, {
 type List, {
   Protocols.lengthable => {
     "length" => Slang::CrystalFn.new("length") { |args|
-      no_error! args.first.as(Slang::List).size
+      args.first.as(Slang::List).size
     }.as(Slang::Callable)
   },
   Protocols.enumerable => {
