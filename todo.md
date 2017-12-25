@@ -1,5 +1,5 @@
 + function dispatch (variadic/ keyword args)
-+ Even better errors (especially runtime ones)
+- Even better errors (especially runtime ones)
 + stdlib of macros and stuff
 + protocols and function dispatch
 + modules

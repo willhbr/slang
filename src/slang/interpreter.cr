@@ -98,7 +98,7 @@ class Interpreter
           return Slang::Macro.new(arguments, bindings, first.location, Slang::List.from(body), splat_arg)
         when "def"
           name = ast[1]
-          raise "name must be identifier" unless name.is_a? Slang::Identifier
+          error! "name must be identifier", first unless name.is_a? Slang::Identifier
           result = expand_macros(ast[2], bindings) 
           ns = bindings["*ns*"].as(NSes)
           ns[name.value] = result
@@ -140,7 +140,7 @@ class Interpreter
   def self.eval(ast : Slang::Object, bindings, in_macro) : Slang::Result
     return eval_node(ast, bindings, in_macro) unless ast.is_a? Slang::List
 
-    raise "Can't eval empty list" if ast.empty?
+    error! "Can't eval empty list" if ast.empty?
 
     if (first = ast.first) && first.is_a?(Slang::Identifier)
       case first.value
@@ -153,21 +153,21 @@ class Interpreter
         return Slang::Type.new names
       when "ns"
         name = ast[1]
-        raise "ns must be identifier" unless name.is_a? Slang::Identifier
+        error! "ns must be identifier" unless name.is_a? Slang::Identifier
         bindings["*ns*"].as(NSes).change_ns(name.value)
         return nil
       when "quote"
         return expand_unquotes(ast[1], bindings, in_macro)
       when "unquote"
-        raise "Can't unquote outside macro" unless in_macro
+        error! "Can't unquote outside macro" unless in_macro
         return eval(ast[1], bindings, in_macro)
       when "unquote-splice"
-        raise "Can't unquote-splice outside macro" unless in_macro
+        error! "Can't unquote-splice outside macro" unless in_macro
         inner = eval(ast[1], bindings, in_macro)
         return Slang::Splice.new(inner)
 
       when "raise"
-        return error! eval(ast[1], bindings, in_macro).to_s, first
+        error! eval(ast[1], bindings, in_macro).to_s, first
       when "def"
         name = ast[1]
         return error! "name must be identifier" unless name.is_a? Slang::Identifier
@@ -183,7 +183,7 @@ class Interpreter
         return result
       when "fn" # TODO Move working out the args into a macro?
         args = ast[1]
-        return error! "args must be vector" unless args.is_a? Slang::Vector
+        error! "args must be vector" unless args.is_a? Slang::Vector
         arguments = Array(Slang::Identifier).new
         splat_started = false
         splat_arg = nil

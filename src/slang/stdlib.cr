@@ -31,9 +31,9 @@ class Lib::Runtime
       first = args.first
       if first.is_a? Slang::List
         first.conjed(args[1])
-      # elsif first.is_a? Slang::Vector
-      #   vec = first.push(args[1].as(Slang::Object))
-      #   vec
+      elsif first.is_a? Slang::Vector
+        vec = first.push(args[1].as(Slang::Object))
+        vec
       else
         error! "can't add to #{first}"
       end
