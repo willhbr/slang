@@ -158,6 +158,24 @@ class Interpreter
         error! "ns must be identifier" unless name.is_a? Slang::Identifier
         bindings["*ns*"].as(NSes).change_ns(name.value)
         return nil
+      when "let"
+        inner = bindings
+        binds = ast[1]
+        error! "bindings must be a vector" unless binds.is_a? Slang::Vector
+        error! "must give bindings in key-value pairs" unless binds.size % 2 == 0
+        binds.each_slice(2) do |assignment|
+          name, value = assignment
+          error! "name must be identifier, got #{name}" unless name.is_a? Slang::Identifier
+          bind_put inner, name.value, eval(value, inner, in_macro)
+        end
+        bindings = inner
+        return ast.rest.each_return_last { |expr|
+          eval(expr, bindings, in_macro)
+        }
+      when "do"
+        return ast.rest.each_return_last { |expr|
+          eval(expr, bindings, in_macro)
+        }
       when "quote"
         return expand_unquotes(ast[1], bindings, in_macro)
       when "unquote"
