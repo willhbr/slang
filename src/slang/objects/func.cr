@@ -53,10 +53,14 @@ module Slang
         bind_put binds, splat.value, Slang::Vector.from(rest)
       end
 
+      is_macro = is_macro?
+
       return @body.each_return_last { |expr|
-        trace Interpreter.eval(expr, binds, false), @location
+        trace Interpreter.eval(expr, binds, is_macro), @location
       }
     end
+
+    def is_macro?; false end
 
     def to_s(io)
       if b = @name
@@ -69,6 +73,8 @@ module Slang
   end
 
   class Macro < Function
+    def is_macro?; true end
+
     def to_s(io)
       if b = @name
         io << "macro-"

@@ -74,28 +74,7 @@ class Interpreter
         when "quote"
           return ast
         when "macro"
-          args = ast[1]
-          return error! "args must be vector" unless args.is_a? Slang::Vector
-          arguments = Array(Slang::Identifier).new
-          splat_started = false
-          splat_arg = nil
-          args.each do |arg|
-            return error! "Args must be identifiers" unless arg.is_a? Slang::Identifier
-            if arg.value == "&"
-              splat_started = true
-              next
-            end
-            if splat_started
-              splat_arg = arg
-              break
-            end
-            arguments << arg
-          end
-          body = Array(Slang::Object).new
-          ast.from(2).each do |node|
-            body << expand_macros(node, bindings)
-          end
-          return Slang::Macro.new(arguments, bindings, first.location, Slang::List.from(body), splat_arg)
+          return eval(ast, bindings, true)
         when "def"
           name = ast[1]
           error! "name must be identifier", first unless name.is_a? Slang::Identifier
@@ -144,6 +123,29 @@ class Interpreter
 
     if (first = ast.first) && first.is_a?(Slang::Identifier)
       case first.value
+      when "macro"
+        args = ast[1]
+        return error! "args must be vector" unless args.is_a? Slang::Vector
+        arguments = Array(Slang::Identifier).new
+        splat_started = false
+        splat_arg = nil
+        args.each do |arg|
+          return error! "Args must be identifiers" unless arg.is_a? Slang::Identifier
+          if arg.value == "&"
+            splat_started = true
+            next
+          end
+          if splat_started
+            splat_arg = arg
+            break
+          end
+          arguments << arg
+        end
+        body = Array(Slang::Object).new
+        ast.from(2).each do |node|
+          body << expand_macros(node, bindings)
+        end
+        return Slang::Macro.new(arguments, bindings, first.location, Slang::List.from(body), splat_arg)
       when "type"
         names = Array(Slang::Atom).new
         ast.data.each do |attr|

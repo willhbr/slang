@@ -55,10 +55,10 @@ class NS
       elsif ns = @imported[mod]?
         return ns[name]
       else
-        raise Slang::Error.new("Unknown namespace #{mod}", iden)
+        raise Slang::Error.new("Unknown namespace `#{mod}`", iden)
       end
     else
-      @defs[iden.value]? || raise Slang::Error.new("Unknown namespace #{mod}", iden)
+      @defs[iden.value]? || raise Slang::Error.new("Unknown namespace `#{mod}`", iden)
     end
   end
 
