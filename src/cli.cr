@@ -16,6 +16,7 @@ class Prompter
     prompt = " |> "
     loop do
       if line = readline prompt, true
+        so_far += '\n'
         so_far += line
       else
         exit # TODO do this more better

@@ -225,6 +225,8 @@ class Interpreter
 
       when "raise"
         error! eval(ast[1], bindings, in_macro).to_s, first
+      when "expand-macros"
+        return expand_macros(ast[1], bindings)
       when "def"
         name = ast[1]
         error! "name must be identifier" unless name.is_a? Slang::Identifier

@@ -116,13 +116,15 @@ module Slang
 
     def backtrace(io)
       io << @message << " from: "
+      first = true
       @trace.each do |location|
+        io << '\n' unless first
+        first = false
         if location.is_a? Identifier
           io << location.value << ' '
           location = location.location
         end
         location.to_s io
-        io << '\n'
       end
     end
   end
