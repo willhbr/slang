@@ -113,7 +113,7 @@ class Scanner
           elsif is_iden_start(char)
             val = identifier(char)
             if val.ends_with? ':'
-              yield sym(:ATOM, val[0..-2])
+              yield sym(:KW_ARG, val[0..-2])
             else
               yield sym(:IDENTIFIER, val)
             end

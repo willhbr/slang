@@ -1,8 +1,6 @@
-(defmacro foo [] (println foo)
-  5)
+(defn bar [a b ** kw-args]
+  (println "a:" a "b:" b)
+  (println kw-args)
+  (println (:foo kw-args)))
 
-(println (foo))
-
-(let [a 5
-      b 6]
-  (println a b))
+(bar 6 1 things: 3 foo: 5)

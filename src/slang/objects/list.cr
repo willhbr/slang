@@ -178,6 +178,10 @@ module Slang
       io << ')'
     end
 
+    def inspect(io)
+      to_s io
+    end
+
     def self.quoted(location, rest)
       create(Identifier.new(location, "quote"), rest)
     end

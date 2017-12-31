@@ -17,6 +17,10 @@ module Slang
       io << @value
     end
 
+    def inspect(io)
+      to_s(io)
+    end
+
     def hash
       mod.hash ^ value.hash
     end
@@ -25,6 +29,8 @@ module Slang
   struct Atom
     property value : String
 
+    delegate :hash, to: @value
+
     def initialize(@value)
     end
 
@@ -32,15 +38,15 @@ module Slang
       io << ':' << @value
     end
 
+    def inspect(io)
+      to_s io
+    end
+
     def with_colon_suffix(io : IO)
       io << @value << ':'
     end
 
-    def hash
-      @value.hash
-    end
-
-    def call(args)
+    def call(args, kw_args)
       first = args.first
       if first.responds_to? :[]
         first[self]
@@ -50,8 +56,25 @@ module Slang
     end
   end
 
+  struct KeywordArg
+    property value : String
+
+    delegate :hash, to: @value
+
+    def initialize(@value)
+    end
+
+    def to_atom
+      Atom.new(@value)
+    end
+
+    def to_s(io : IO)
+      io << @value << ':'
+    end
+  end
+
   alias Object = (Int32 | String | Bool | Immutable::Vector(Object) | List |
-                  Immutable::Map(Object, Object) | Atom | Identifier | Splice |
+                  Immutable::Map(Object, Object) | KeywordArg | Atom | Identifier | Splice |
                   Function | Protocol | Callable | Instance | Regex | NSes | NS | Nil)
 
   alias Result = Slang::Object

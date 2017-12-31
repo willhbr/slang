@@ -14,6 +14,57 @@ macro lookup?(bindings, key)
 end
 
 class Interpreter
+  macro make_fun(ast, type, &process)
+    args = ast[1]
+    error! "args must be vector" unless args.is_a? Slang::Vector
+    arguments = Array(Slang::Identifier).new
+    splat_started = false
+    splat_arg = nil
+    kwargs_arg = nil
+    kw_started = false
+    args.each do |arg|
+      return error! "Args must be identifiers" unless arg.is_a? Slang::Identifier
+      if arg.value == "&"
+        splat_started = true
+        next
+      end
+      if arg.value == "**"
+        kw_started = true
+        next
+      end
+      if splat_started
+        splat_arg = arg
+        next
+      end
+      if kw_started
+        kwargs_arg = arg
+        next
+      end
+      arguments << arg
+    end
+    %body = ({{ process.body }})
+    return {{ type }}.new(arguments, bindings, first.location, %body, splat_arg, kwargs_arg)
+  end
+
+  macro call_fun(func, &process)
+    kw_args = Hash(String, Slang::Object).new
+    kw_arg_name = nil
+    values = Array(Slang::Object).new
+    ast.rest.each do |arg|
+      if arg.is_a? Slang::KeywordArg
+        error! "Missing value for keyword arg: #{kw_arg_name}" if kw_arg_name
+        kw_arg_name = arg.value
+      elsif n = kw_arg_name
+        kw_arg_name = nil
+        kw_args[n] = ({{ process.body }})
+      else
+        values << ({{ process.body }})
+      end
+    end
+    error! "Missing value for keyword arg: #{kw_arg_name}" if kw_arg_name
+    trace({{ func }}.call(values, kw_args), first)
+  end
+
   def self.expand_with_splice_quotes(ast, bindings, klass, in_macro) : Slang::Result
     res = Array(Slang::Object).new
     ast.each do |node|
@@ -92,8 +143,9 @@ class Interpreter
         else
           mac = lookup?(bindings, first)
           if mac && (mac.is_a?(Slang::Macro) || mac.is_a?(Slang::CrystalMacro))
-            values = ast.data.map_to_arr &.itself
-            return trace(mac.call(values), first)
+            call_fun mac do
+              arg
+            end
           else
             return ast.map { |a| expand_macros(a, bindings) }
           end
@@ -124,28 +176,13 @@ class Interpreter
     if (first = ast.first) && first.is_a?(Slang::Identifier)
       case first.value
       when "macro"
-        args = ast[1]
-        return error! "args must be vector" unless args.is_a? Slang::Vector
-        arguments = Array(Slang::Identifier).new
-        splat_started = false
-        splat_arg = nil
-        args.each do |arg|
-          return error! "Args must be identifiers" unless arg.is_a? Slang::Identifier
-          if arg.value == "&"
-            splat_started = true
-            next
+        make_fun ast, Slang::Macro do
+          body = Array(Slang::Object).new
+          ast.from(2).each do |node|
+            body << expand_macros(node, bindings)
           end
-          if splat_started
-            splat_arg = arg
-            break
-          end
-          arguments << arg
+          Slang::List.from body
         end
-        body = Array(Slang::Object).new
-        ast.from(2).each do |node|
-          body << expand_macros(node, bindings)
-        end
-        return Slang::Macro.new(arguments, bindings, first.location, Slang::List.from(body), splat_arg)
       when "type"
         names = Array(Slang::Atom).new
         ast.data.each do |attr|
@@ -190,7 +227,7 @@ class Interpreter
         error! eval(ast[1], bindings, in_macro).to_s, first
       when "def"
         name = ast[1]
-        return error! "name must be identifier" unless name.is_a? Slang::Identifier
+        error! "name must be identifier" unless name.is_a? Slang::Identifier
         result = eval(ast[2], bindings, in_macro)
         ns = bindings["*ns*"].as(NSes)
         ns[name.value] = result
@@ -202,47 +239,20 @@ class Interpreter
         end
         return result
       when "fn" # TODO Move working out the args into a macro?
-        args = ast[1]
-        error! "args must be vector" unless args.is_a? Slang::Vector
-        arguments = Array(Slang::Identifier).new
-        splat_started = false
-        splat_arg = nil
-        kwargs_arg = nil
-        kw_started = false
-        args.each do |arg|
-          return error! "Args must be identifiers" unless arg.is_a? Slang::Identifier
-          if arg.value == "&"
-            splat_started = true
-            next
-          end
-          if arg.value == "*"
-            kw_started = true
-            next
-          end
-          if splat_started
-            splat_arg = arg
-            next
-          end
-          if kw_started
-            kwargs_arg = arg
-            next
-          end
-          arguments << arg
+        make_fun ast, Slang::Function do
+          ast.from(2)
         end
-        return Slang::Function.new(arguments, bindings, first.location, ast.data.data, splat_arg, kwargs_arg)
       end
     end
 
     func = eval(ast.first, bindings, in_macro)
 
     if func.responds_to? :call
-      values = ast.rest.map_to_arr do |arg|
+      call_fun func do
         eval(arg, bindings, in_macro)
       end
-      trace(func.call(values), first)
     else
-      return error! "Can't call non-function" unless func.is_a? Slang::CrystalFn
-      return func.call(ast.data.map_to_arr { |expr| eval(expr, bindings, in_macro) })
+      error! "Can't call non-function: #{func}"
     end
   end
 

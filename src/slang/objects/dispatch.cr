@@ -30,7 +30,7 @@ module Slang
     end
 
     # This is the constructor, called like a function
-    def call(values)
+    def call(values, kw_args)
       first = values.first
       if first.is_a? Slang::Map
         Instance.new(self, first)
@@ -43,9 +43,9 @@ module Slang
       end
     end
 
-    def dispatch_method(protocol, func, args)
+    def dispatch_method(protocol, func, args, kw_args)
       implementation = implementations[protocol]? || raise "#{@name} doesn't implement #{protocol.name}"
-      implementation[func].call(args)
+      implementation[func].call(args, kw_args)
     end
 
     def to_s(io)
@@ -80,16 +80,17 @@ module Slang
   class Method < Callable
     def initialize(@protocol : Protocol, @func : String)
     end
-    def call(args)
+
+    def call(args, kw_args)
       arg = args.first
       raise "Can't call on #{arg}" unless arg.responds_to? :send
-      arg.send(@protocol, @func, args)
+      arg.send(@protocol, @func, args, kw_args)
     end
   end
 
   module CrystalSendable
-    def send(protocol, func, args)
-      type.dispatch_method(protocol, func, args)
+    def send(protocol, func, args, kw_args)
+      type.dispatch_method(protocol, func, args, kw_args)
     end
 
     def type

@@ -82,6 +82,8 @@ class Parser
       string(sym)
     when :ATOM
       atom(sym)
+    when :KW_ARG
+      kw_arg(sym)
     when :EOF
       raise ExpectedEOF.new
     else
@@ -118,7 +120,12 @@ class Parser
       raise UnexpectedEOF.new unless key
       raise UnexpectedEOF.new if key && key.type == :EOF
       break if key.type == :"}"
-      key_obj = object()
+      if key.type == :KW_ARG
+        key_obj = atom(key)
+        pop_sym?
+      else
+        key_obj = object()
+      end
 
       value = peek_sym?
       raise UnexpectedEOF.new unless value
@@ -187,6 +194,10 @@ class Parser
 
   def string(token)
     token.value.as(String)
+  end
+
+  def kw_arg(token)
+    Slang::KeywordArg.new token.value.as(String)
   end
 
   def atom(token)

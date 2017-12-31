@@ -2,7 +2,7 @@ require "../slang/interpreter"
 
 module Slang
   abstract class Callable
-    abstract def call(args) : Result
+    abstract def call(args, kw_args) : Result
   end
 
   class CrystalFn < Callable
@@ -13,7 +13,7 @@ module Slang
       io << @name
     end
 
-    def call(args)
+    def call(args, kw_args)
       @block.call args
     end
   end
@@ -24,7 +24,6 @@ module Slang
   class Function < Callable
     property arg_names
     property splat_name
-    # TODO this doesn't do anything
     property kw_name
     property captured
     property body
@@ -39,10 +38,16 @@ module Slang
       call(args)
     end
 
-    def call(values)
+    def call(values, kw_args)
       binds = @captured
-      @arg_names.each_with_index do |name, idx|
-        bind_put binds, name.value, values[idx]?
+      values_idx = 0
+      @arg_names.each do |name|
+        if kw_args.has_key? name.value
+          bind_put binds, name.value, kw_args.delete(name.value)
+        else
+          bind_put binds, name.value, values[values_idx]?
+          values_idx += 1
+        end
       end
 
       if splat = @splat_name
@@ -51,6 +56,14 @@ module Slang
           rest.push(arg)
         end
         bind_put binds, splat.value, Slang::Vector.from(rest)
+      end
+
+      if kw_name = @kw_name
+        map = Slang::Map.new
+        kw_args.each do |k, v|
+          map = map.set(Slang::Atom.new(k), v)
+        end
+        bind_put binds, kw_name.value, map
       end
 
       is_macro = is_macro?
