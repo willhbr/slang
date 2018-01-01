@@ -102,8 +102,11 @@ module Slang
   class Error < Exception
     property trace : Array(Identifier | FileLocation)    
 
-    def initialize(@message : String, cause)
-      @trace = [cause] of Identifier | FileLocation
+    def initialize(@message : String, cause = nil)
+      @trace = [] of Identifier | FileLocation
+      if c = cause
+        @trace.push c
+      end
     end
 
     def to_s(io)

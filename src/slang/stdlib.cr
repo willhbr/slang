@@ -27,6 +27,10 @@ class Lib::Runtime
       nil
     end
 
+    func(bind, raise) do |args|
+      error! args.first.to_s
+    end
+
     func(bind, conj) do |args|
       first = args.first
       if first.is_a? Slang::List
@@ -109,6 +113,9 @@ end
 class Lib::CompileTime
   def self.new
     bind = Lib::Runtime.new
+    func(bind, :"expand-macros", type = Slang::CrystalMacro) do |ast, _kw_args, bindings|
+      Interpreter.expand_macros(ast[0], bindings)
+    end
     bind
   end
 end

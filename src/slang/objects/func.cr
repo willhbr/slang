@@ -6,15 +6,19 @@ module Slang
   end
 
   class CrystalFn < Callable
-    def initialize(@name : String, &@block : Array(Object) -> Result)
+    def initialize(@name : String, &@block : (Array(Object), Hash(String, Slang::Object), Bindings) -> Result)
     end
 
     def to_s(io)
       io << @name
     end
 
+    def call(args, kw_args, bindings)
+      @block.call args, kw_args, bindings
+    end
+
     def call(args, kw_args)
-      @block.call args
+      raise "Shouldn't call this"
     end
   end
 

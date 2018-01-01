@@ -64,7 +64,12 @@ class Interpreter
       end
     end
     error! "Missing value for keyword arg: #{kw_arg_name}" if kw_arg_name
-    trace({{ func }}.call(values, kw_args), first)
+    %func = ({{ func }})
+    if %func.is_a? Slang::CrystalFn
+      trace(%func.call(values, kw_args, bindings), first)
+    else
+      trace(%func.call(values, kw_args), first)
+    end
   end
 
   def self.expand_with_splice_quotes(ast, bindings, klass, in_macro) : Slang::Result
@@ -224,11 +229,6 @@ class Interpreter
         error! "Can't unquote-splice outside macro" unless in_macro
         inner = eval(ast[1], bindings, in_macro)
         return Slang::Splice.new(inner)
-
-      when "raise"
-        error! eval(ast[1], bindings, in_macro).to_s, first
-      when "expand-macros"
-        return expand_macros(ast[1], bindings)
       when "def"
         name = ast[1]
         error! "name must be identifier" unless name.is_a? Slang::Identifier

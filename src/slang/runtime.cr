@@ -2,7 +2,7 @@ require "./objects"
 
 macro error!(message, cause=nil)
   {% if cause == nil %}
-    raise Slang::Error.new({{ message }}, Slang::Identifier.new FileLocation["th", 1, 2], "Stuff")
+    raise Slang::Error.new({{ message }})
   {% else %}
     raise Slang::Error.new({{ message }}, ({{ cause }}).location)
   {% end %}
