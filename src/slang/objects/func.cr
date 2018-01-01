@@ -1,4 +1,4 @@
-require "../slang/interpreter"
+require "../interpreter"
 
 module Slang
   abstract class Callable
@@ -41,21 +41,27 @@ module Slang
     def call(values, kw_args)
       binds = @captured
       values_idx = 0
+      arg_count = values.size
       @arg_names.each do |name|
         if kw_args.has_key? name.value
           bind_put binds, name.value, kw_args.delete(name.value)
         else
-          bind_put binds, name.value, values[values_idx]?
+          unless values_idx < arg_count
+            error! "Not enough arguments for #{name}: expected ~#{arg_names.size}#{splat_name ? "+" : ""}", self
+          end
+          bind_put binds, name.value, values[values_idx]
           values_idx += 1
         end
       end
 
       if splat = @splat_name
         rest = Array(Slang::Object).new
-        values[@arg_names.size..-1].each do |arg|
+        values[values_idx..-1].each do |arg|
           rest.push(arg)
         end
         bind_put binds, splat.value, Slang::Vector.from(rest)
+      elsif values_idx < arg_count
+        error! "Too many arguments for #{name}: expected ~#{arg_names.size}", self
       end
 
       if kw_name = @kw_name
@@ -64,6 +70,8 @@ module Slang
           map = map.set(Slang::Atom.new(k), v)
         end
         bind_put binds, kw_name.value, map
+      elsif !kw_args.empty?
+        error! "Unknown keyword args passed to #{name}: #{kw_args.keys.join(' ')}"
       end
 
       is_macro = is_macro?

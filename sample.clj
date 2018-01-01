@@ -1,11 +1,4 @@
-(defmacro only-doodle [doodle ** a]
-  ~doodle)
+(defn foo [& args ** kw-args]
+  (println "Hello!" args kw-args))
 
-(defn bar [a b ** kw-args]
-  (println "a:" a "b:" b)
-  (println kw-args)
-  (println (:foo kw-args)))
-
-(bar 6 1 things: 3 foo: 5)
-
-(println (expand-macros (only-doodle doodle: 5)))
+(foo 1 3 bar: 4)

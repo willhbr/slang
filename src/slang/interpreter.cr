@@ -34,10 +34,12 @@ class Interpreter
       end
       if splat_started
         splat_arg = arg
+        splat_started = false
         next
       end
       if kw_started
         kwargs_arg = arg
+        kw_started = false
         next
       end
       arguments << arg
