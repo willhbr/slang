@@ -1,4 +1,3 @@
-(defn foo [& args ** kw-args]
-  (println "Hello!" args kw-args))
-
-(foo 1 3 bar: 4)
+(println (let [foo 1
+               binds (*bindings*)]
+           (:foo binds)))

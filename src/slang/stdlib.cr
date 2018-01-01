@@ -7,7 +7,7 @@ macro func(bind, name, type=Slang::CrystalFn, &body)
   {% else %}
     name = {{ name.stringify }}
   {% end %}
-  {{bind}} = {{bind}}.set(name, ({{ type }}.new(name) {{ body }}))
+  {{bind}}[name] = ({{ type }}.new(name) {{ body }})
 end
 
 class Lib::Runtime
@@ -22,16 +22,16 @@ class Lib::Runtime
     
     bind = bind.set "*ns*", ns.as(Slang::Object)
 
-    func(bind, println) do |args|
+    func(ns, println) do |args|
       puts args.join(" ")
       nil
     end
 
-    func(bind, raise) do |args|
+    func(ns, raise) do |args|
       error! args.first.to_s
     end
 
-    func(bind, conj) do |args|
+    func(ns, conj) do |args|
       first = args.first
       if first.is_a? Slang::List
         first.conjed(args[1])
@@ -44,21 +44,20 @@ class Lib::Runtime
     end
 
 
-    func(bind, first) do |args|
+    func(ns, first) do |args|
       a = args[0]
-      next error! "Can't get first of non-list" unless a.is_a? Slang::List
-      next nil if a.empty?
-      a.first
+      next error! "Can't get first of non-list" unless a.responds_to? :first_or_nil?
+      a.first_or_nil?
     end
 
-    func(bind, rest) do |args|
+    func(ns, rest) do |args|
       a = args[0]
       next error! "Can't get rest of non-list" unless a.is_a? Slang::List
       next a if a.empty?
       a.data
     end
 
-    func(bind, :<=) do |args|
+    func(ns, :<=) do |args|
       a = args[0]
       b = args[1]
       if a.is_a?(Int32) && b.is_a?(Int32)
@@ -70,19 +69,19 @@ class Lib::Runtime
       end
     end
 
-    func(bind, :+) do |args|
-      a = args[0]
-      b = args[1]
-      if a.is_a?(Int32) && b.is_a?(Int32)
-        a + b
-      elsif a.is_a?(String) && b.is_a?(String)
-        a + b
-      else
-       next error! "Can't add that business"
+    func(ns, :+) do |args|
+      error! "Not enough args to +" if args.empty?
+      if args.first.is_a? Int32
+        args.reduce 0 do |a, b|
+          error! "Can't add #{b}" unless b.is_a? Int32
+          a + b
+        end
+      elsif args.first.is_a? String
+        args.join
       end
     end
 
-    func(bind, :-) do |args|
+    func(ns, :-) do |args|
       a = args[0]
       b = args[1]
       if a.is_a?(Int32) && b.is_a?(Int32)
@@ -92,7 +91,7 @@ class Lib::Runtime
       end
     end
 
-    func(bind, :*) do |args|
+    func(ns, :*) do |args|
       a = args[0]
       b = args[1]
       if a.is_a?(Int32) && b.is_a?(Int32)
@@ -101,7 +100,16 @@ class Lib::Runtime
         error! "Can't multiply that business"
       end
     end
-    
+
+    func(ns, :"*bindings*") do |ast, _kw_args, bindings|
+      res = Slang::Map.new
+      bindings.each do |k, v|
+        res = res.set(Slang::Atom.new(k), v)
+      end
+      res
+    end
+
+
     tree = SlangRunner.read_from("stdlib.clj", {{ `cat ./src/stdlib.clj`.stringify }})
     tree = SlangRunner.compile(bind, tree)
     SlangRunner.execute(bind, tree)
@@ -113,9 +121,13 @@ end
 class Lib::CompileTime
   def self.new
     bind = Lib::Runtime.new
-    func(bind, :"expand-macros", type = Slang::CrystalMacro) do |ast, _kw_args, bindings|
+
+    ns = bind["*ns*"].as(NSes)
+
+    func(ns, :"expand-macros", type = Slang::CrystalMacro) do |ast, _kw_args, bindings|
       Interpreter.expand_macros(ast[0], bindings)
     end
+
     bind
   end
 end

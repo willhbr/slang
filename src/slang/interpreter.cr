@@ -212,9 +212,8 @@ class Interpreter
           error! "name must be identifier, got #{name}" unless name.is_a? Slang::Identifier
           bind_put inner, name.value, eval(value, inner, in_macro)
         end
-        bindings = inner
-        return ast.rest.each_return_last { |expr|
-          eval(expr, bindings, in_macro)
+        return ast.from(2).each_return_last { |expr|
+          eval(expr, inner, in_macro)
         }
       when "do"
         return ast.rest.each_return_last { |expr|

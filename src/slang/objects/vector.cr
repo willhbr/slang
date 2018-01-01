@@ -40,6 +40,10 @@ module Slang
       nil
     end
 
+    def first_or_nil?
+      self[0]?
+    end
+
     include Slang::CrystalSendable
     def type
       VectorType.instance

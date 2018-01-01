@@ -56,6 +56,14 @@ module Slang
       end
     end
 
+    def first_or_nil?
+      if h = @head
+        h.value
+      else
+        nil
+      end
+    end
+
     def data
       if h = @head
         List.new h.rest
