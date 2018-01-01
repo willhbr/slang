@@ -52,9 +52,8 @@ class Lib::Runtime
 
     func(ns, rest) do |args|
       a = args[0]
-      next error! "Can't get rest of non-list" unless a.is_a? Slang::List
-      next a if a.empty?
-      a.data
+      next error! "Can't get rest of non-list" unless a.responds_to? :rest
+      a.rest
     end
 
     func(ns, :<=) do |args|

@@ -44,6 +44,10 @@ module Slang
       self[0]?
     end
 
+    def rest
+      Slang::Vector.new self.to_a[1..-1]
+    end
+
     include Slang::CrystalSendable
     def type
       VectorType.instance
