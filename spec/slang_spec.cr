@@ -14,9 +14,9 @@ describe Slang do
   it "calls a protocol method" do
     o = "Hello world"
     puts o.type
-    length = o.send(Protocols.lengthable, "length", [o] of Slang::Object)
+    length = o.send(Protocols.lengthable, "length", [o] of Slang::Object, {} of String => Slang::Object)
     length.should eq(11)
-    string = o.send(Protocols.printable, "->string", [o] of Slang::Object)
+    string = o.send(Protocols.printable, "->string", [o] of Slang::Object, {} of String => Slang::Object)
     string.should eq("Hello world")
   end
 end

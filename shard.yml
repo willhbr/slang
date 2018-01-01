@@ -7,11 +7,12 @@ authors:
 dependencies:
   immutable:
     github: javanut13/immutable
+    version: 0.1.22
 
 targets:
   slg:
     main: src/cli.cr
 
-crystal: 0.23.1
+crystal: 0.24.1
 
 license: MIT
