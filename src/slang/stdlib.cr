@@ -100,6 +100,22 @@ class Lib::Runtime
       end
     end
 
+    func(ns, slurp) do |args, _kw_args, bindings|
+      first = args.first
+      error! "Path must be string" unless first.is_a? String
+      File.read(first)
+    end
+
+    func(ns, :"/=") do |args|
+      error! "Not enough args for =" if args.size < 2
+      next args[0] != args[1]
+    end
+
+    func(ns, :"=") do |args|
+      error! "Not enough args for =" if args.size < 2
+      next args[0] == args[1]
+    end
+
     func(ns, :"*bindings*") do |ast, _kw_args, bindings|
       res = Slang::Map.new
       bindings.each do |k, v|
