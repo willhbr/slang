@@ -183,6 +183,7 @@ class Interpreter
     if (first = ast.first) && first.is_a?(Slang::Identifier)
       case first.value
       when "macro"
+        puts "making macro"
         make_fun ast, Slang::Macro do
           body = Array(Slang::Object).new
           ast.from(2).each do |node|

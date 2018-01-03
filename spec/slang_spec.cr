@@ -5,18 +5,17 @@ describe Slang do
 
   it "runs a file" do
     comp = Lib::CompileTime.new
+    comp = comp.set("compile-time?", true)
     run = Lib::Runtime.new
+    run = run.set("compile-time?", false)
+    assertions = 0
+    run = run.set("assert", Slang::CrystalFn.new("assert") do |args|
+      error! "Failed assertion: #{args[1]?}" unless args[0]
+      assertions += 1
+    end)
     tree = SlangRunner.read "./spec/test.clj"
     tree = SlangRunner.compile comp, tree
     SlangRunner.execute run, tree
-  end
-
-  it "calls a protocol method" do
-    o = "Hello world"
-    puts o.type
-    length = o.send(Protocols.lengthable, "length", [o] of Slang::Object, {} of String => Slang::Object)
-    length.should eq(11)
-    string = o.send(Protocols.printable, "->string", [o] of Slang::Object, {} of String => Slang::Object)
-    string.should eq("Hello world")
+    puts assertions
   end
 end

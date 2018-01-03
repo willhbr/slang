@@ -1,4 +1,7 @@
-(println (rest [1 2 3]))
+(defmacro print-ast [ast]
+  (println ast)
+  ast)
 
-(println (slurp "sample.clj"))
+(def Person (type first last))
 
+(print-ast (println #Person{first: "Will" last: "Richardson"}))

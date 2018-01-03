@@ -1,11 +1,8 @@
-(def show-ast (macro [& items] (print_each items)))
+(defn test-args [a b & rest ** others]
+  [a b rest others])
 
-(def foo (macro [i] (println i)))
-
-#foo /a b c/
-#foo(a b c)
-#foo[a b c]
-#foo{a: b c: nil}
-#foo"Things"
-
-(println "Hello world")
+(assert (= (test-args 1 2 3 4) [1 2 [3 4] {}]))
+(assert (= (test-args 1 2 3 f: 4) [1 2 [3] {f: 4}]))
+(assert (= (test-args 1 2 3 f: 4 6 7 8) [1 2 [3 6 7 8] {f: 4}]))
+(assert (= (test-args b: 1 a: 2 3 4) [2 1 [3 4] {}]))
+(assert (= (test-args c: "Hello" b: 1 a: 2 3 4) [2 1 [3 4] {c: "Hello"}]))

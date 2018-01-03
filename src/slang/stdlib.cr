@@ -124,6 +124,9 @@ class Lib::Runtime
       res
     end
 
+    func(ns, eval) do |ast, _kw_args, bindings|
+      Interpreter.expand_and_eval ast.first, bindings, true
+    end
 
     tree = SlangRunner.read_from("stdlib.clj", {{ `cat ./src/stdlib.clj`.stringify }})
     tree = SlangRunner.compile(bind, tree)
