@@ -7,14 +7,14 @@ end
 
 macro lookup(bindings, key)
   ({{ bindings }}).fetch({{ key }}.value) do
-    # FIXME this seems like a bug
+    # FIXME this forced cast seems like a bug
     ({{ bindings }})["*ns*"].as(NSes)[{{ key }}.as(Slang::Identifier)]
   end
 end
 
 macro lookup?(bindings, key)
   ({{ bindings }}).fetch({{ key }}.value) do
-    # FIXME this seems like a bug
+    # FIXME this forced cast seems like a bug
     ({{ bindings }})["*ns*"].as(NSes)[{{ key }}.as(Slang::Identifier)]?
   end
 end
@@ -156,9 +156,10 @@ class Interpreter
         else
           mac = lookup?(bindings, first)
           if mac && (mac.is_a?(Slang::Macro) || mac.is_a?(Slang::CrystalMacro))
-            call_fun mac do
+            result = (call_fun mac do
               arg
-            end
+            end)
+            return expand_macros(result, bindings)
           else
             return ast.map { |a| expand_macros(a, bindings) }
           end
@@ -189,7 +190,6 @@ class Interpreter
     if (first = ast.first) && first.is_a?(Slang::Identifier)
       case first.value
       when "macro"
-        puts "making macro"
         make_fun ast, Slang::Macro do
           body = Array(Slang::Object).new
           ast.from(2).each do |node|

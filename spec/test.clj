@@ -9,6 +9,6 @@
 
 (defmacro test-compile-time []
   (assert (= compile-time? true) "Compile time is true")
-  nil)
+  `(assert (= compile-time? false) "Compile time is false"))
  
 (test-compile-time)

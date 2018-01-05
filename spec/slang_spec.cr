@@ -7,15 +7,23 @@ describe Slang do
     comp = comp.set("compile-time?", true)
     run = Lib::Runtime.new
     run = run.set("compile-time?", false)
-    puts comp["compile-time?"]
     assertions = 0
     run = run.set("assert", Slang::CrystalFn.new("assert") do |args|
       error! "Failed assertion: #{args[1]?}" unless args[0]
       assertions += 1
     end)
+    comp = comp.set("assert", Slang::CrystalFn.new("assert") do |args|
+      error! "Failed assertion: #{args[1]?}" unless args[0]
+      assertions += 1
+    end)
     tree = SlangRunner.read "./spec/test.clj"
     tree = SlangRunner.compile comp, tree
-    SlangRunner.execute run, tree
+    begin
+      SlangRunner.execute run, tree
+    rescue e : Slang::Error
+      puts e
+      fail "Assertion failed"
+    end
     puts assertions
   end
 end
