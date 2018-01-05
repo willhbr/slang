@@ -1,6 +1,6 @@
 version: 1.0
 shards:
   immutable:
-    github: lucaong/immutable
-    version: 0.1.21
+    github: javanut13/immutable
+    version: 0.1.22
 

@@ -4,6 +4,9 @@ class ExpectedEOF < Exception
 end
 
 class UnexpectedEOF < Exception
+  def initialize
+    super("Unexpected EOF")
+  end
 end
 
 class Parser
@@ -104,9 +107,6 @@ class Parser
       break if sym.type == terminator
 
       value = object()
-      unless value
-        raise UnexpectedEOF.new
-      end
       into << value
     end
     pop_sym? # Get rid of terminator
@@ -128,7 +128,6 @@ class Parser
       end
 
       value = peek_sym?
-      raise UnexpectedEOF.new unless value
       raise UnexpectedEOF.new if value && value.type == :EOF
       key.parse_error "Map literals must have an even number of elements" if key.type == :"}"
       value_obj = object()

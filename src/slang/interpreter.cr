@@ -6,11 +6,17 @@ macro bind_put(var, key, value)
 end
 
 macro lookup(bindings, key)
-  ({{ bindings }}[{{ key }}.value]? || {{ bindings }}["*ns*"].as(NSes)[{{ key }}])
+  ({{ bindings }}).fetch({{ key }}.value) do
+    # FIXME this seems like a bug
+    ({{ bindings }})["*ns*"].as(NSes)[{{ key }}.as(Slang::Identifier)]
+  end
 end
 
 macro lookup?(bindings, key)
-  ({{ bindings }}[{{ key }}.value]? || {{ bindings }}["*ns*"].as(NSes)[{{ key }}]?)
+  ({{ bindings }}).fetch({{ key }}.value) do
+    # FIXME this seems like a bug
+    ({{ bindings }})["*ns*"].as(NSes)[{{ key }}.as(Slang::Identifier)]?
+  end
 end
 
 class Interpreter

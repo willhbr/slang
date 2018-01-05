@@ -12,7 +12,12 @@ macro trace(expr, location)
   begin
     {{ expr }}
   rescue %error : Slang::Error
-    %error.add_to_trace( {{ location }} ) if {{ location }}.is_a? FileLocation || {{ location }}.is_a? Slang::Identifier
+    # FIXME this is the type inference bug again
+    if ({{ location }}).is_a? FileLocation
+      %error.add_to_trace( {{ location }}.as(FileLocation))
+    elsif ({{ location }}).is_a? Slang::Identifier
+      %error.add_to_trace( {{ location }}.as(Slang::Identifier))
+    end
     raise %error
   end
 end
