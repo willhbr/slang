@@ -12,3 +12,13 @@
   `(assert (= compile-time? false) "Compile time is false"))
  
 (test-compile-time)
+
+(defmacro test-expand-splicing [& items]
+  [:items ~@items])
+
+(assert (= (test-expand-splicing 1 2 3) [:items 1 2 3]))
+
+(defmacro unless [condition then else]
+  `(if ~condition
+     ~else
+     ~then))

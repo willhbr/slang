@@ -124,6 +124,33 @@ class Lib::Runtime
       res
     end
 
+    func(ns, isl) do |ast, _kw_args, bindings|
+      run : Immutable::Map(String, Slang::Object) = Lib::Runtime.new
+      compile : Immutable::Map(String, Slang::Object) = Lib::CompileTime.new
+
+      p = Prompter.new run, compile
+      puts "Starting repl"
+      res = p.repl
+      puts "finished"
+      res
+    end
+
+    # FIXME this is absolutely not the right way to do this
+    waiting = [] of Channel(Nil)
+    func(ns, spawn) do |ast, _kw_args, bindings|
+      chan = Channel(Nil).new
+      waiting.push chan
+      spawn do
+        Interpreter.eval(ast.first, bindings, false)
+        chan.send(nil)
+      end
+      nil
+    end
+
+    func(ns, join) do
+      waiting.each &.receive
+    end
+
     func(ns, eval) do |ast, _kw_args, bindings|
       Interpreter.expand_and_eval ast.first, bindings, true
     end

@@ -1,4 +1,64 @@
 require "./slang/*"
+require "readline"
+
+class Prompter
+  include Readline
+  property run : Bindings
+  property compile : Bindings
+
+  class EOFEntered < Exception
+  end
+
+  def initialize(@run, @compile)
+    Readline.autocomplete do |string|
+      defs = @run["*ns*"].as(NSes).current.defs.keys.select &.starts_with?(string)
+      defs + @run.keys
+    end
+  end
+
+  def read
+    so_far = ""
+    prompt = " |> "
+    loop do
+      if line = readline prompt, true
+        so_far += '\n'
+        so_far += line
+      else
+        raise EOFEntered.new
+      end
+      begin
+        tree = SlangRunner.read_from "repl", so_far
+        return tree
+      rescue UnexpectedEOF
+        prompt = "||> "
+      end
+    end
+  end
+
+  def eval(tree, prev=nil)
+    begin
+      tree = SlangRunner.compile @compile, tree
+      SlangRunner.execute @run.set("_", prev), tree
+    rescue e : Slang::Error
+      puts e
+    rescue compiler_failed
+      puts "COMPILER FAILED:"
+      puts compiler_failed.inspect_with_backtrace
+    end
+  end
+
+  def repl
+    res = nil
+    loop do
+      tree = read
+      res = eval(tree, res)
+      puts "=> #{res}" if res
+    end
+    res
+  rescue e : EOFEntered
+    res
+  end
+end
 
 module SlangRunner
   extend self

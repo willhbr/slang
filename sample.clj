@@ -1,7 +1,16 @@
-(defmacro print-ast [ast]
-  (println ast)
-  ast)
+(defn foo []
+  (spawn
+    (do
+      (println (slurp "sample.clj")))))
 
-(def Person (type first last))
+(spawn (isl))
+(foo)
+(foo)
+(foo)
+(foo)
+(foo)
+(foo)
+(foo)
 
-(print-ast (println #Person{first: "Will" last: "Richardson"}))
+
+(join)
