@@ -170,8 +170,8 @@ class Lib::Runtime
 end
 
 class Lib::CompileTime
-  def self.new
-    bind = Lib::Runtime.new
+  def self.new(runtime = Lib::Runtime.new)
+    bind = runtime
 
     ns = bind["*ns*"].as(NSes)
 
