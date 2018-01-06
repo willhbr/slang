@@ -21,20 +21,18 @@ module Slang
       end
     end
 
-    def to_s(io : IO)
-      io << '['
-      first = true
-      each do |item|
-        io << ' ' unless first
-        first = false
-        item.to_s io
+    {% for method in [:to_s, :inspect] %}
+      def {{ method.id }}(io : IO)
+        io << '['
+        first = true
+        each do |item|
+          io << ' ' unless first
+          first = false
+          item.{{ method.id }} io
+        end
+        io << ']'
       end
-      io << ']'
-    end
-
-    def inspect(io : IO)
-      to_s io
-    end
+    {% end %}
 
     def [](iden : Slang::Atom)
       nil
@@ -61,21 +59,23 @@ module Slang
       MapType.instance
     end
 
-    def to_s(io : IO)
-      io << '{'
-      first = true
-      each do |k, v|
-        io << ' ' unless first
-        first = false
-        if k.is_a? Slang::Atom
-          k.with_colon_suffix io
-        else
-          k.to_s io
+    {% for method in [:to_s, :inspect] %}
+      def {{ method.id }}(io : IO)
+        io << '{'
+        first = true
+        each do |k, v|
+          io << ' ' unless first
+          first = false
+          if k.is_a? Slang::Atom
+            k.with_colon_suffix io
+          else
+            k.{{ method.id }} io
+          end
+          io << ' '
+          v.to_s io
         end
-        io << ' '
-        v.to_s io
+        io << '}'
       end
-      io << '}'
-    end
+    {% end %}
   end
 end

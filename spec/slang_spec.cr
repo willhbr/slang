@@ -11,11 +11,11 @@ describe Slang do
   tests = [] of ->Nil
   comp = comp.set("testing", Slang::CrystalMacro.new("testing") do |ast|
     message = ast[0].as(String)
-    ast = ast[1..-1].map do |node|
-      Interpreter.expand_macros(node, comp)
-    end
     tests << -> do
       it message do
+        ast = ast[1..-1].map do |node|
+          Interpreter.expand_macros(node, comp)
+        end
         ast.each do |node|
           Interpreter.eval(node, run, false)
         end

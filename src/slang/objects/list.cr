@@ -192,20 +192,18 @@ module Slang
       end
     {% end %}
 
-    def to_s(io)
-      current = @head
-      io << '('
-      while current
-        io << ' ' unless current === @head
-        current.value.to_s io
-        current = current.rest
+    {% for method in [:to_s, :inspect] %}
+      def {{ method.id }}(io)
+        current = @head
+        io << '('
+        while current
+          io << ' ' unless current === @head
+          current.value.{{ method.id }} io
+          current = current.rest
+        end
+        io << ')'
       end
-      io << ')'
-    end
-
-    def inspect(io)
-      to_s io
-    end
+    {% end %}
 
     def self.quoted(location, rest)
       create(Identifier.new(location, "quote"), rest)
