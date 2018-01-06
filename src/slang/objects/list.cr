@@ -175,6 +175,23 @@ module Slang
       s
     end
 
+    {% for size in [2, 3, 4] %}
+      def splat_first_{{ size }}
+        current = @head
+        {
+          {% for i in 0..size %}
+            if c = current
+              val = c.value
+              current = c.rest
+              val
+            else
+              nil
+            end,
+          {% end %}
+        }
+      end
+    {% end %}
+
     def to_s(io)
       current = @head
       io << '('

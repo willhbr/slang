@@ -151,6 +151,12 @@ class Lib::Runtime
       waiting.each &.receive
     end
 
+    func(ns, :alias, type = Slang::CrystalMacro) do |args|
+      old, new = args
+      ns.alias_to(old.as(Slang::Identifier).value, new.as(Slang::Identifier).value)
+      nil
+    end
+
     func(ns, eval) do |ast, _kw_args, bindings|
       Interpreter.expand_and_eval ast.first, bindings, true
     end

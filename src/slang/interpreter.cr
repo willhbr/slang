@@ -55,6 +55,7 @@ class Interpreter
   end
 
   macro call_fun(func, &process)
+    %func = ({{ func }})
     kw_args = Hash(String, Slang::Object).new
     kw_arg_name = nil
     values = Array(Slang::Object).new
@@ -70,7 +71,6 @@ class Interpreter
       end
     end
     error! "Missing value for keyword arg: #{kw_arg_name}" if kw_arg_name
-    %func = ({{ func }})
     if %func.is_a? Slang::CrystalFn
       trace(%func.call(values, kw_args, bindings), first)
     else
@@ -140,9 +140,9 @@ class Interpreter
         when "macro"
           return eval(ast, bindings, true)
         when "def"
-          name = ast[1]
+          name, value = ast.rest.splat_first_2
           error! "name must be identifier", first unless name.is_a? Slang::Identifier
-          result = expand_macros(ast[2], bindings) 
+          result = expand_macros(value, bindings) 
           ns = bindings["*ns*"].as(NSes)
           ns[name.value] = result
           if result.responds_to? :"name="
@@ -151,8 +151,7 @@ class Interpreter
           if result.responds_to? :"location="
             result.location = name.location
           end
-          exp = Slang::List.create(first, name, result)
-          return exp
+          return Slang::List.create(first, name, result)
         else
           mac = lookup?(bindings, first)
           if mac && (mac.is_a?(Slang::Macro) || mac.is_a?(Slang::CrystalMacro))
@@ -236,11 +235,11 @@ class Interpreter
         inner = eval(ast[1], bindings, in_macro)
         return Slang::Splice.new(inner)
       when "def"
-        name = ast[1]
+        name, value = ast.rest.splat_first_2
         error! "name must be identifier" unless name.is_a? Slang::Identifier
-        result = eval(ast[2], bindings, in_macro)
+        result = eval(value, bindings, in_macro)
         ns = bindings["*ns*"].as(NSes)
-        ns[name.value] = result
+        ns[name] = result
         if result.responds_to? :"name="
           result.name = name.value
         end

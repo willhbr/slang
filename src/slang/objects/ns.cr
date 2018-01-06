@@ -3,20 +3,24 @@ require "./objects"
 alias Bindings = Immutable::Map(String, Slang::Object)
 
 class NSes
-  property current = NS.global
+  property current : NS
   property nses = Hash(String, NS).new
 
-  delegate :[]?, :[], :[]=, to: @current
-
   def initialize
-    nses[current.name] = current
+    @current = NS.new "Global"
+    @nses[@current.name] = @current
   end
 
   def change_ns(new_name)
     prev = @current
     @current = nses[new_name]? || NS.new new_name
-    @current.import(prev)
-    nses[new_name] = @current
+    # @current.import(prev)
+    @nses[new_name] = @current
+  end
+
+  def alias_to(old, new_name)
+    ns = @nses[old]
+    @nses[new_name] = ns
   end
 
   def to_s(io)
@@ -27,39 +31,41 @@ class NSes
       ns.describe(io)
     end
   end
+
+  def []?(iden : Slang::Identifier)
+    if modul = iden.mod
+      ns = @nses[modul]?
+      return nil unless ns
+      ns[iden.value]?
+    else
+      @current[iden.value]?
+    end
+  end
+
+  def [](iden : Slang::Identifier)
+    if modul = iden.mod
+      ns = @nses.fetch modul do
+        error! "Undefined module #{modul}"
+      end
+      trace(ns[iden.value], iden)
+    else
+      trace(@current[iden.value], iden)
+    end
+  end
+
+  delegate :[]=, :[], to: @current
 end
 
 class NS
   property defs = Hash(String, Slang::Object).new
-  property imported = Hash(String, NS).new
+  property aliased = Array(NS).new
   property name : String
 
-  def self.global
-    new "Global"
-  end
-
   def initialize(@name)
-    @imported[@name] = self
-    @defs[@name] = self.as(Slang::Object)
   end
 
-  def import(ns : NS)
-    @imported[ns.name] = ns
-  end
-
-  def [](iden : Slang::Identifier)
-    if mod = iden.mod
-      name = iden.value
-      if (proto = @defs[mod]?) && proto.is_a? Slang::Protocol
-        return proto.get_method(name)
-      elsif ns = @imported[mod]?
-        return ns[name]
-      else
-        raise Slang::Error.new("Unknown namespace `#{mod}.#{name}`", iden)
-      end
-    else
-      @defs[iden.value]? || raise Slang::Error.new("Cannot find #{iden}", iden)
-    end
+  def alias(ns : NS)
+    aliased.push ns
   end
 
   def [](iden : Slang::Atom)
@@ -67,29 +73,17 @@ class NS
   end
 
   def [](iden : String)
-    @defs[iden]
+    @defs.fetch iden do
+      error! "Unbound def #{name}.#{iden}"
+    end
   end
 
   def []?(iden : String)
     @defs[iden]?
   end
 
-  def []?(iden : Slang::Identifier)
-    if mod = iden.mod
-      name = iden.value
-      if (proto = @defs[mod]?) && proto.is_a? Slang::Protocol
-        return proto.get_method(name)
-      elsif ns = @imported[mod]?
-        return ns[name]?
-      else
-        nil
-      end
-    else
-      @defs[iden.value]?
-    end
-  end
-
   def []=(name : Slang::Identifier, value)
+    error! "Can't define within namespace", name if name.mod
     @defs[name.value] = value
   end
 
