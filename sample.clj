@@ -1,5 +1,5 @@
-(defn foo []
-  (println "THINGS@!"))
+(deftype Thing
+  name
+  address)
 
-
-(foo)
+(println #Thing{name: "foo" address: "bar"})
