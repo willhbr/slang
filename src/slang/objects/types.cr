@@ -19,15 +19,17 @@ class Protocols
   proto printable, ["->string"]
   proto enumerable, ["reduce"]
 end
-macro type(t, implement, use=:class)
+macro type(t, implement, is_class=true)
   {% name = (t.stringify + "Type").id %}
-  {% if use == :class %}
+  {% if is_class %}
     class {{ t }}
       include Slang::CrystalSendable
+      deftype
     end
   {% else %}
     struct {{ t }}
       include Slang::CrystalSendable
+      deftype
     end
   {% end %}
   class {{ name }} < Slang::Type
@@ -49,7 +51,7 @@ type Int32, {
       args.first.as(Int32).to_s
     }.as(Slang::Callable)
   }
-}, use: :struct
+}, is_class: false
 
 type Map, {
   Protocols.lengthable => {
@@ -107,77 +109,73 @@ type Bool, {
       args.first.as(Bool).to_s
     }.as(Slang::Callable)
   }
-}, use: :struct
-type Atom, {
-  Protocols.printable => {
-    "->string" => Slang::CrystalFn.new("->string") { |args|
-      args.first.as(Atom).to_s
-    }.as(Slang::Callable)
+}, is_class: false
+
+module Slang
+  type Atom, {
+    Protocols.printable => {
+      "->string" => Slang::CrystalFn.new("->string") { |args|
+        args.first.as(Atom).to_s
+      }.as(Slang::Callable)
+    }
+  }, is_class: false
+  type Identifier, {
+    Protocols.printable => {
+      "->string" => Slang::CrystalFn.new("->string") { |args|
+        args.first.as(Identifier).to_s
+      }.as(Slang::Callable)
+    }
+  }, is_class: false
+  type Splice, {
+    Protocols.printable => {
+      "->string" => Slang::CrystalFn.new("->string") { |args|
+        args.first.as(Splice).to_s
+      }.as(Slang::Callable)
+    }
   }
-}, use: :struct
-type Identifier, {
-  Protocols.printable => {
-    "->string" => Slang::CrystalFn.new("->string") { |args|
-      args.first.as(Identifier).to_s
-    }.as(Slang::Callable)
+  type Function, {
+    Protocols.printable => {
+      "->string" => Slang::CrystalFn.new("->string") { |args|
+        args.first.as(Function).to_s
+      }.as(Slang::Callable)
+    }
   }
-}, use: :class
-type Splice, {
-  Protocols.printable => {
-    "->string" => Slang::CrystalFn.new("->string") { |args|
-      args.first.as(Splice).to_s
-    }.as(Slang::Callable)
+  # type Callable, {
+  #   Protocols.printable => {
+  #     "->string" => Slang::CrystalFn.new("->string") { |args|
+  #       args.first.as(Callable).to_s
+  #     }.as(Slang::Callable)
+  #   }
+  # }
+  type Instance, {
+    Protocols.printable => {
+      "->string" => Slang::CrystalFn.new("->string") { |args|
+        args.first.as(Instance).to_s
+      }.as(Slang::Callable)
+    }
   }
-}, use: :class
-type Function, {
-  Protocols.printable => {
-    "->string" => Slang::CrystalFn.new("->string") { |args|
-      args.first.as(Function).to_s
-    }.as(Slang::Callable)
+  type Regex, {
+    Protocols.printable => {
+      "->string" => Slang::CrystalFn.new("->string") { |args|
+        args.first.as(Regex).to_s
+      }.as(Slang::Callable)
+    }
   }
-}, use: :class
-type Callable, {
-  Protocols.printable => {
-    "->string" => Slang::CrystalFn.new("->string") { |args|
-      args.first.as(Callable).to_s
-    }.as(Slang::Callable)
-  }
-}, use: :class
-type Instance, {
-  Protocols.printable => {
-    "->string" => Slang::CrystalFn.new("->string") { |args|
-      args.first.as(Instance).to_s
-    }.as(Slang::Callable)
-  }
-}, use: :class
-type Regex, {
-  Protocols.printable => {
-    "->string" => Slang::CrystalFn.new("->string") { |args|
-      args.first.as(Regex).to_s
-    }.as(Slang::Callable)
-  }
-}, use: :class
+end
 type NSes, {
   Protocols.printable => {
     "->string" => Slang::CrystalFn.new("->string") { |args|
       args.first.as(NSes).to_s
     }.as(Slang::Callable)
   }
-}, use: :class
+}
 type Nil, {
   Protocols.printable => {
     "->string" => Slang::CrystalFn.new("->string") { |args|
       args.first.as(Nil).to_s
     }.as(Slang::Callable)
   }
-}, use: :struct
-type Wrapper, {
-  Protocols.printable => {
-    "->string" => Slang::CrystalFn.new("->string") { |args|
-      args.first.as(Wrapper).to_s
-    }.as(Slang::Callable)
-  }
-}, use: :struct
+}, is_class: false
 
 type List, {
   Protocols.lengthable => {
@@ -198,6 +196,59 @@ type List, {
     }.as(Slang::Callable)
   }
 }
+type NS, {
+  Protocols.lengthable => {
+    "length" => Slang::CrystalFn.new("length") { |args|
+      args.first.as(NS).defs.size
+    }.as(Slang::Callable)
+  }
+}
+
+module Slang
+  type Macro, {
+    Protocols.lengthable => {
+      "length" => Slang::CrystalFn.new("length") { |args|
+        args.first.as(NS).defs.size
+      }.as(Slang::Callable)
+    }
+  }
+
+  type KeywordArg, {
+    Protocols.lengthable => {
+      "length" => Slang::CrystalFn.new("length") { |args|
+        args.first.as(NS).defs.size
+      }.as(Slang::Callable)
+    }
+  }, is_class: false
+  type CrystalMacro, {
+    Protocols.lengthable => {
+      "length" => Slang::CrystalFn.new("length") { |args|
+        args.first.as(NS).defs.size
+      }.as(Slang::Callable)
+    }
+  }
+  type CrystalFn, {
+    Protocols.lengthable => {
+      "length" => Slang::CrystalFn.new("length") { |args|
+        args.first.as(NS).defs.size
+      }.as(Slang::Callable)
+    }
+  }
+  type Method, {
+    Protocols.lengthable => {
+      "length" => Slang::CrystalFn.new("length") { |args|
+        args.first.as(NS).defs.size
+      }.as(Slang::Callable)
+    }
+  }
+  type Protocol, {
+    Protocols.lengthable => {
+      "length" => Slang::CrystalFn.new("length") { |args|
+        args.first.as(NS).defs.size
+      }.as(Slang::Callable)
+    }
+  }
+end
 
 class String
   def [](iden : Slang::Atom)

@@ -47,17 +47,12 @@ module Slang
     end
 
     include Slang::CrystalSendable
-    def type
-      VectorType.instance
-    end
+    deftype VectorType
   end
 
   class Immutable::Map(K, V)
     include Slang::CrystalSendable
-
-    def type
-      MapType.instance
-    end
+    deftype MapType
 
     {% for method in [:to_s, :inspect] %}
       def {{ method.id }}(io : IO)

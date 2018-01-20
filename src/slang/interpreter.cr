@@ -22,7 +22,7 @@ end
 class Interpreter
   macro make_fun(ast, type, &process)
     args = ast[1]
-    error! "args must be vector" unless args.is_a? Slang::Vector
+    check_type args, Slang::Vector
     arguments = Array(Slang::Identifier).new
     splat_started = false
     splat_arg = nil
@@ -211,11 +211,11 @@ class Interpreter
       when "let"
         inner = bindings
         binds = ast[1]
-        error! "bindings must be a vector" unless binds.is_a? Slang::Vector
+        check_type binds, Slang::Vector, "bindings must be a vector"
         error! "must give bindings in key-value pairs" unless binds.size % 2 == 0
         binds.each_slice(2) do |assignment|
           name, value = assignment
-          error! "name must be identifier, got #{name}" unless name.is_a? Slang::Identifier
+          check_type name, Slang::Identifier, "name must be identifier"
           bind_put inner, name.value, eval(value, inner, in_macro)
         end
         return ast.from(2).each_return_last { |expr|
@@ -236,7 +236,7 @@ class Interpreter
         return Slang::Splice.new(inner)
       when "def"
         name, value = ast.rest.splat_first_2
-        error! "name must be identifier" unless name.is_a? Slang::Identifier
+        check_type name, Slang::Identifier, "name must be identifier"
         result = eval(value, bindings, in_macro)
         ns = bindings["*ns*"].as(NSes)
         ns[name] = result

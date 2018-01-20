@@ -26,6 +26,14 @@ module Slang
     property name : String?
     getter attr_names : Array(Atom)
 
+    def send(protocol, func, args, kw_args)
+      type.dispatch_method(protocol, func, args, kw_args)
+    end
+
+    def type
+      return self
+    end
+
     def initialize(@attr_names)
     end
 
@@ -89,12 +97,21 @@ module Slang
   end
 
   module CrystalSendable
-    def send(protocol, func, args, kw_args)
-      type.dispatch_method(protocol, func, args, kw_args)
-    end
+    macro deftype(type = nil)
+      def self.type
+        {% if type == nil %}
+          {{ (@type.stringify + "Type").id }}.instance
+        {% else %}
+          {{ type }}.instance
+        {% end %}
+      end
+      def send(protocol, func, args, kw_args)
+        type.dispatch_method(protocol, func, args, kw_args)
+      end
 
-    def type
-      {{ (@type.stringify + "Type").id }}.instance
+      def type
+        self.class.type
+      end
     end
   end
 end

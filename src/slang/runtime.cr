@@ -21,3 +21,23 @@ macro trace(expr, location)
     raise %error
   end
 end
+
+macro check_type(var, type, message=nil)
+  {% if message == nil %}
+    {% message = "Must be of type #{ type }" %}
+  {% end %}
+  unless ({{ var }}).is_a? {{ type }}
+    error!(
+      {% if message == nil %}
+        "Must be of type #{ {{ type }}.type.name }, not #{ {{ var }}.type }"
+      {% else %}
+        {{ message }} + ", got #{ {{ var }}.type.name }"
+      {% end %}
+      {% if type == Slang::Identifier %}
+        , {{ var }}
+      {% end %}
+    )
+  else
+    {{ var }}
+  end
+end
