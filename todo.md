@@ -1,5 +1,3 @@
-+ function dispatch (variadic/ keyword args)
-- Even better errors (especially runtime ones)
 + stdlib of macros and stuff
 + protocols and function dispatch
 + modules
@@ -7,7 +5,6 @@
 + better strings
 + floats
 + maybe larger numbers
-- immutable.cr structures
 + atom, set!
 + set literals and set structure
 + function argument destructuring

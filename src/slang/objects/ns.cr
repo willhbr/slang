@@ -14,7 +14,6 @@ class NSes
   def change_ns(new_name)
     prev = @current
     @current = nses[new_name]? || NS.new new_name
-    # @current.import(prev)
     @nses[new_name] = @current
   end
 
@@ -32,25 +31,29 @@ class NSes
     end
   end
 
+  def get_ns(name : String) : NS?
+    @nses[name]?
+  end
+
   def []?(iden : Slang::Identifier)
-    if modul = iden.mod
-      ns = @nses[modul]?
-      return nil unless ns
-      ns[iden.value]?
-    else
-      @current[iden.value]?
-    end
+    # if false # modul = iden.mod
+    #   ns = @nses[modul]?
+    #   return nil unless ns
+    #   ns[iden.simple!]?
+    # else
+      @current[iden.simple!]?
+    # end
   end
 
   def [](iden : Slang::Identifier)
-    if modul = iden.mod
-      ns = @nses.fetch modul do
-        error! "Undefined module #{modul}"
-      end
-      trace(ns[iden.value], iden)
-    else
-      trace(@current[iden.value], iden)
-    end
+    # if modul = iden.mod
+    #   ns = @nses.fetch modul do
+    #     error! "Undefined module #{modul}"
+    #   end
+    #   trace(ns[iden.simple!], iden)
+    # else
+      trace(@current[iden.simple!], iden)
+    # end
   end
 
   delegate :[]=, :[], to: @current
@@ -68,6 +71,12 @@ class NS
     aliased.push ns
   end
 
+  def lookup(name : String, &block)
+    @defs.fetch name do
+      yield
+    end
+  end
+
   def [](iden : Slang::Atom)
     self[iden.value]
   end
@@ -83,8 +92,8 @@ class NS
   end
 
   def []=(name : Slang::Identifier, value)
-    error! "Can't define within namespace", name if name.mod
-    @defs[name.value] = value
+    # error! "Can't define within namespace", name if name.mod
+    @defs[name.simple!] = value
   end
 
   def []=(name, value)
@@ -92,7 +101,18 @@ class NS
   end
 
   def to_s(io)
-    io << @name
+    inspect io
+  end
+
+  def inspect(io)
+    io << @name << '<'
+    first = true
+    @defs.each_key do |name|
+      io << ' ' unless first
+      first = false
+      io << name
+    end
+    io << '>'
   end
 
   def describe(io)

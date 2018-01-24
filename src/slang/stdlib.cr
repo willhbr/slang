@@ -153,7 +153,7 @@ class Lib::Runtime
 
     func(ns, :alias, type = Slang::CrystalMacro) do |args|
       old, new = args
-      ns.alias_to(old.as(Slang::Identifier).value, new.as(Slang::Identifier).value)
+      ns.alias_to(old.as(Slang::Identifier).simple!, new.as(Slang::Identifier).simple!)
       nil
     end
 

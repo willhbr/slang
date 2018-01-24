@@ -148,12 +148,7 @@ class Parser
     when "false"
       false
     else
-      mod, _dot, var = value.partition('.')
-      if var.empty?
-        Slang::Identifier.new token.location, mod
-      else
-        Slang::Identifier.new token.location, var, mod
-      end
+      Slang::Identifier.new token.location, token.value.as(String)
     end
   end
 

@@ -6,17 +6,11 @@ macro bind_put(var, key, value)
 end
 
 macro lookup(bindings, key)
-  ({{ bindings }}).fetch({{ key }}.value) do
-    # FIXME this forced cast seems like a bug
-    ({{ bindings }})["*ns*"].as(NSes)[{{ key }}.as(Slang::Identifier)]
-  end
+  ({{ key }}).lookup! bindings
 end
 
 macro lookup?(bindings, key)
-  ({{ bindings }}).fetch({{ key }}.value) do
-    # FIXME this forced cast seems like a bug
-    ({{ bindings }})["*ns*"].as(NSes)[{{ key }}.as(Slang::Identifier)]?
-  end
+  ({{ key }}).lookup? bindings
 end
 
 class Interpreter
@@ -30,11 +24,11 @@ class Interpreter
     kw_started = false
     args.each do |arg|
       return error! "Args must be identifiers" unless arg.is_a? Slang::Identifier
-      if arg.value == "&"
+      if arg.simple! == "&"
         splat_started = true
         next
       end
-      if arg.value == "**"
+      if arg.simple! == "**"
         kw_started = true
         next
       end
@@ -97,9 +91,9 @@ class Interpreter
       expand_with_splice_quotes(ast, bindings, Slang::Vector, in_macro)
     when Slang::List
       return ast if ast.empty?
-      if (first = ast.first) && first.is_a?(Slang::Identifier) && first.value == "unquote"
+      if (first = ast.first) && first.is_a?(Slang::Identifier) && first.simple == "unquote"
         expand_and_eval(ast[1], bindings, in_macro)
-      elsif (first = ast.first) && first.is_a?(Slang::Identifier) && first.value == "unquote-splice"
+      elsif (first = ast.first) && first.is_a?(Slang::Identifier) && first.simple == "unquote-splice"
         inner = eval(ast[1], bindings, in_macro)
         Slang::Splice.new(inner)
       else
@@ -129,11 +123,11 @@ class Interpreter
       return ast
     when Slang::List
       if (first = ast.first) && first.is_a?(Slang::Identifier)
-        case first.value
+        case first.simple
         when "ns"
           name = ast[1]
           raise "ns must be identifier" unless name.is_a? Slang::Identifier
-          bindings["*ns*"].as(NSes).change_ns(name.value)
+          bindings["*ns*"].as(NSes).change_ns(name.simple!)
           return ast
         when "quote"
           return ast
@@ -141,12 +135,12 @@ class Interpreter
           return eval(ast, bindings, true)
         when "def"
           name, value = ast.rest.splat_first_2
-          error! "name must be identifier", first unless name.is_a? Slang::Identifier
+          check_type name, Slang::Identifier
           result = expand_macros(value, bindings) 
           ns = bindings["*ns*"].as(NSes)
-          ns[name.value] = result
+          ns[name.simple!] = result
           if result.responds_to? :"name="
-            result.name = name.value
+            result.name = name.simple!
           end
           if result.responds_to? :"location="
             result.location = name.location
@@ -187,7 +181,7 @@ class Interpreter
     error! "Can't eval empty list" if ast.empty?
 
     if (first = ast.first) && first.is_a?(Slang::Identifier)
-      case first.value
+      case first.simple
       when "macro"
         make_fun ast, Slang::Macro do
           body = Array(Slang::Object).new
@@ -200,13 +194,13 @@ class Interpreter
         names = Array(Slang::Atom).new
         ast.data.each do |attr|
           return error! "Attributes must be identifiers" unless attr.is_a? Slang::Identifier
-          names << Slang::Atom.new(attr.value)
+          names << Slang::Atom.new(attr.simple!)
         end
         return Slang::Type.new names
       when "ns"
         name = ast[1]
         error! "ns must be identifier" unless name.is_a? Slang::Identifier
-        bindings["*ns*"].as(NSes).change_ns(name.value)
+        bindings["*ns*"].as(NSes).change_ns(name.simple!)
         return nil
       when "let"
         inner = bindings
@@ -216,7 +210,7 @@ class Interpreter
         binds.each_slice(2) do |assignment|
           name, value = assignment
           check_type name, Slang::Identifier, "name must be identifier"
-          bind_put inner, name.value, eval(value, inner, in_macro)
+          bind_put inner, name.simple!, eval(value, inner, in_macro)
         end
         return ast.from(2).each_return_last { |expr|
           eval(expr, inner, in_macro)
@@ -241,7 +235,7 @@ class Interpreter
         ns = bindings["*ns*"].as(NSes)
         ns[name] = result
         if result.responds_to? :"name="
-          result.name = name.value
+          result.name = name.simple!
         end
         if result.responds_to? :"location="
           result.location = name.location

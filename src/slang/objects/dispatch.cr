@@ -68,19 +68,30 @@ module Slang
     def initialize(@methods)
     end
 
-    def describe(io)
-      io << name << methods
+    def to_s(io)
+      io << @name << '<'
+      first = true
+      methods.each do |meth|
+        io << ' ' unless first
+        first = false
+        io << meth
+      end
+      io << '>'
     end
 
-    def to_s(io)
-      io << @name
+    def lookup(var : String, &block)
+      if methods.includes? var
+        Method.new self, var
+      else
+        yield
+      end
     end
 
     def get_method(func)
       if methods.includes? func
         Method.new self, func
       else 
-        raise "#{@name} doesn't define #{func}"
+        error! "#{@name} doesn't define #{func}"
       end
     end
   end
@@ -93,6 +104,14 @@ module Slang
       arg = args.first
       raise "Can't call on #{arg}" unless arg.responds_to? :send
       arg.send(@protocol, @func, args, kw_args)
+    end
+
+    def to_s(io)
+      io << @func
+    end
+
+    def inspect(io)
+      to_s io
     end
   end
 

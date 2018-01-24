@@ -47,13 +47,13 @@ module Slang
       values_idx = 0
       arg_count = values.size
       @arg_names.each do |name|
-        if kw_args.has_key? name.value
-          bind_put binds, name.value, kw_args.delete(name.value)
+        if kw_args.has_key? name.simple!
+          bind_put binds, name.simple!, kw_args.delete(name.simple!)
         else
           unless values_idx < arg_count
             error! "Not enough arguments for #{name}: expected ~#{arg_names.size}#{splat_name ? "+" : ""}", self
           end
-          bind_put binds, name.value, values[values_idx]
+          bind_put binds, name.simple!, values[values_idx]
           values_idx += 1
         end
       end
@@ -63,7 +63,7 @@ module Slang
         values[values_idx..-1].each do |arg|
           rest.push(arg)
         end
-        bind_put binds, splat.value, Slang::Vector.from(rest)
+        bind_put binds, splat.simple!, Slang::Vector.from(rest)
       elsif values_idx < arg_count
         error! "Too many arguments for #{name}: expected ~#{arg_names.size}", self
       end
@@ -73,7 +73,7 @@ module Slang
         kw_args.each do |k, v|
           map = map.set(Slang::Atom.new(k), v)
         end
-        bind_put binds, kw_name.value, map
+        bind_put binds, kw_name.simple!, map
       elsif !kw_args.empty?
         error! "Unknown keyword args passed to #{name}: #{kw_args.keys.join(' ')}"
       end
