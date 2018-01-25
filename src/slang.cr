@@ -37,7 +37,7 @@ class Prompter
 
   def eval(tree, prev=nil)
     begin
-      tree = SlangRunner.compile @compile, tree
+      tree = SlangRunner.compile @compile.set("_", prev), tree
       SlangRunner.execute @run.set("_", prev), tree
     rescue e : Slang::Error
       puts e
@@ -94,7 +94,7 @@ module SlangRunner
     return unless program
     res = nil
     program.each do |expr|
-      res = Interpreter.eval(expr, bindings, false)
+      res = Interpreter.eval(expr, bindings)
     end
     res
   end

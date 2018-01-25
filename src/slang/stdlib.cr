@@ -141,7 +141,7 @@ class Lib::Runtime
       chan = Channel(Nil).new
       waiting.push chan
       spawn do
-        Interpreter.eval(ast.first, bindings, false)
+        Interpreter.eval(ast.first, bindings)
         chan.send(nil)
       end
       nil
@@ -158,7 +158,7 @@ class Lib::Runtime
     end
 
     func(ns, eval) do |ast, _kw_args, bindings|
-      Interpreter.expand_and_eval ast.first, bindings, true
+      Interpreter.expand_and_eval ast.first, bindings
     end
 
     tree = SlangRunner.read_from("stdlib.clj", {{ `cat ./src/stdlib.clj`.stringify }})

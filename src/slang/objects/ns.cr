@@ -35,27 +35,6 @@ class NSes
     @nses[name]?
   end
 
-  def []?(iden : Slang::Identifier)
-    # if false # modul = iden.mod
-    #   ns = @nses[modul]?
-    #   return nil unless ns
-    #   ns[iden.simple!]?
-    # else
-      @current[iden.simple!]?
-    # end
-  end
-
-  def [](iden : Slang::Identifier)
-    # if modul = iden.mod
-    #   ns = @nses.fetch modul do
-    #     error! "Undefined module #{modul}"
-    #   end
-    #   trace(ns[iden.simple!], iden)
-    # else
-      trace(@current[iden.simple!], iden)
-    # end
-  end
-
   delegate :[]=, :[], to: @current
 end
 
@@ -77,22 +56,11 @@ class NS
     end
   end
 
-  def [](iden : Slang::Atom)
-    self[iden.value]
-  end
-
-  def [](iden : String)
-    @defs.fetch iden do
-      error! "Unbound def #{name}.#{iden}"
-    end
-  end
-
-  def []?(iden : String)
-    @defs[iden]?
+  def [](iden)
+    @defs[iden]
   end
 
   def []=(name : Slang::Identifier, value)
-    # error! "Can't define within namespace", name if name.mod
     @defs[name.simple!] = value
   end
 

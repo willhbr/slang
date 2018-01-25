@@ -5,14 +5,6 @@ macro bind_put(var, key, value)
   {{ var }} = {{ var }}.set({{ key }}, {{ value }})
 end
 
-macro lookup(bindings, key)
-  ({{ key }}).lookup! bindings
-end
-
-macro lookup?(bindings, key)
-  ({{ key }}).lookup? bindings
-end
-
 class Interpreter
   macro make_fun(ast, type, &process)
     args = ast[1]
@@ -72,10 +64,10 @@ class Interpreter
     end
   end
 
-  def self.expand_with_splice_quotes(ast, bindings, klass, in_macro) : Slang::Result
+  def self.expand_with_splice_quotes(ast, bindings, klass) : Slang::Result
     res = Array(Slang::Object).new
     ast.each do |node|
-      expanded = expand_unquotes(node, bindings, in_macro)
+      expanded = expand_unquotes(node, bindings)
       if expanded.is_a? Slang::Splice
         expanded.into res
       else
@@ -85,24 +77,24 @@ class Interpreter
     klass.from res
   end
 
-  def self.expand_unquotes(ast : Slang::Object, bindings, in_macro) : Slang::Result
+  def self.expand_unquotes(ast : Slang::Object, bindings) : Slang::Result
     case ast
     when Slang::Vector
-      expand_with_splice_quotes(ast, bindings, Slang::Vector, in_macro)
+      expand_with_splice_quotes(ast, bindings, Slang::Vector)
     when Slang::List
       return ast if ast.empty?
       if (first = ast.first) && first.is_a?(Slang::Identifier) && first.simple == "unquote"
-        expand_and_eval(ast[1], bindings, in_macro)
+        expand_and_eval(ast[1], bindings)
       elsif (first = ast.first) && first.is_a?(Slang::Identifier) && first.simple == "unquote-splice"
-        inner = eval(ast[1], bindings, in_macro)
+        inner = eval(ast[1], bindings)
         Slang::Splice.new(inner)
       else
-        expand_with_splice_quotes(ast, bindings, Slang::List, in_macro)
+        expand_with_splice_quotes(ast, bindings, Slang::List)
       end
     when Slang::Map
       result = Hash(Slang::Object, Slang::Object).new
       ast.each do |k, v|
-        result[expand_and_eval(k, bindings, in_macro)] = expand_and_eval(v, bindings, in_macro)
+        result[expand_and_eval(k, bindings)] = expand_and_eval(v, bindings)
       end
       return Slang::Map.new result
     else
@@ -110,8 +102,8 @@ class Interpreter
     end
   end
 
-  def self.expand_and_eval(ast, bindings, in_macro) : Slang::Result
-    eval(expand_macros(ast, bindings), bindings, in_macro)
+  def self.expand_and_eval(ast, bindings) : Slang::Result
+    eval(expand_macros(ast, bindings), bindings)
   end
 
   def self.expand_macros(ast, bindings) : Slang::Result
@@ -132,7 +124,7 @@ class Interpreter
         when "quote"
           return ast
         when "macro"
-          return eval(ast, bindings, true)
+          return eval(ast, bindings)
         when "def"
           name, value = ast.rest.splat_first_2
           check_type name, Slang::Identifier
@@ -147,7 +139,7 @@ class Interpreter
           end
           return Slang::List.create(first, name, result)
         else
-          mac = lookup?(bindings, first)
+          mac = first.lookup? bindings
           if mac && (mac.is_a?(Slang::Macro) || mac.is_a?(Slang::CrystalMacro))
             result = (call_fun mac do
               arg
@@ -175,8 +167,8 @@ class Interpreter
     value != nil
   end
 
-  def self.eval(ast : Slang::Object, bindings, in_macro) : Slang::Result
-    return eval_node(ast, bindings, in_macro) unless ast.is_a? Slang::List
+  def self.eval(ast : Slang::Object, bindings) : Slang::Result
+    return eval_node(ast, bindings) unless ast.is_a? Slang::List
 
     error! "Can't eval empty list" if ast.empty?
 
@@ -210,28 +202,28 @@ class Interpreter
         binds.each_slice(2) do |assignment|
           name, value = assignment
           check_type name, Slang::Identifier, "name must be identifier"
-          bind_put inner, name.simple!, eval(value, inner, in_macro)
+          bind_put inner, name.simple!, eval(value, inner)
         end
         return ast.from(2).each_return_last { |expr|
-          eval(expr, inner, in_macro)
+          eval(expr, inner)
         }
       when "do"
         return ast.rest.each_return_last { |expr|
-          eval(expr, bindings, in_macro)
+          eval(expr, bindings)
         }
       when "quote"
-        return expand_unquotes(ast[1], bindings, in_macro)
+        return expand_unquotes(ast[1], bindings)
       when "unquote"
-        error! "Can't unquote outside macro" unless in_macro
-        return eval(ast[1], bindings, in_macro)
+        # error! "Can't unquote outside macro" unless in_macro
+        return eval(ast[1], bindings)
       when "unquote-splice"
-        error! "Can't unquote-splice outside macro" unless in_macro
-        inner = eval(ast[1], bindings, in_macro)
+        # error! "Can't unquote-splice outside macro" unless in_macro
+        inner = eval(ast[1], bindings)
         return Slang::Splice.new(inner)
       when "def"
         name, value = ast.rest.splat_first_2
         check_type name, Slang::Identifier, "name must be identifier"
-        result = eval(value, bindings, in_macro)
+        result = eval(value, bindings)
         ns = bindings["*ns*"].as(NSes)
         ns[name] = result
         if result.responds_to? :"name="
@@ -248,33 +240,33 @@ class Interpreter
       end
     end
 
-    func = eval(ast.first, bindings, in_macro)
+    func = eval(ast.first, bindings)
 
     if func.responds_to? :call
       call_fun func do
-        eval(arg, bindings, in_macro)
+        eval(arg, bindings)
       end
     else
       error! "Can't call non-function: #{func}"
     end
   end
 
-  def self.eval_node(ast : Slang::Object, bindings, in_macro) : Slang::Result
+  def self.eval_node(ast : Slang::Object, bindings) : Slang::Result
     return case ast
     when Slang::Vector
-      expanded = expand_with_splice_quotes(ast, bindings, Slang::Vector, in_macro).as(Slang::Vector)
+      expanded = expand_with_splice_quotes(ast, bindings, Slang::Vector).as(Slang::Vector)
       expanded.each_with_index do |item, idx|
-        expanded = expanded.set(idx, eval(item, bindings, in_macro))
+        expanded = expanded.set(idx, eval(item, bindings))
       end
       return expanded
     when Slang::Map
       result = Hash(Slang::Object, Slang::Object).new
       ast.each do |key, value|      
-        result[eval(key, bindings, in_macro)] = eval(value, bindings, in_macro)
+        result[eval(key, bindings)] = eval(value, bindings)
       end
       Slang::Map.new(result)
     when Slang::Identifier
-      lookup(bindings, ast)
+      ast.lookup! bindings
     else
       ast
     end

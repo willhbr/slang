@@ -22,7 +22,7 @@ module Slang
       parts.hash
     end
 
-    def simple
+    def simple : String?
       if @parts.rest.nil?
         @parts.value
       else

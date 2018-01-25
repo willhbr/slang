@@ -78,10 +78,8 @@ module Slang
         error! "Unknown keyword args passed to #{name}: #{kw_args.keys.join(' ')}"
       end
 
-      is_macro = is_macro?
-
       return @body.each_return_last { |expr|
-        trace Interpreter.eval(expr, binds, is_macro), @location
+        trace Interpreter.eval(expr, binds), @location
       }
     end
 
