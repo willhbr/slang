@@ -213,13 +213,6 @@ class Interpreter
         }
       when "quote"
         return expand_unquotes(ast[1], bindings)
-      when "unquote"
-        # error! "Can't unquote outside macro" unless in_macro
-        return eval(ast[1], bindings)
-      when "unquote-splice"
-        # error! "Can't unquote-splice outside macro" unless in_macro
-        inner = eval(ast[1], bindings)
-        return Slang::Splice.new(inner)
       when "def"
         name, value = ast.rest.splat_first_2
         check_type name, Slang::Identifier, "name must be identifier"

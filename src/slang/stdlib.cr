@@ -179,6 +179,15 @@ class Lib::CompileTime
       Interpreter.expand_macros(ast[0], bindings)
     end
 
+    func(ns, :unquote) do |ast, _kw_args, bindings|
+      Interpreter.eval(ast[0], bindings)
+    end
+
+    func(ns, :"unquote-splice") do |ast, _kw_args, bindings|
+      inner = Interpreter.eval(ast[0], bindings)
+      Slang::Splice.new(inner)
+    end
+
     bind
   end
 end
