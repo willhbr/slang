@@ -1,4 +1,5 @@
 require "./func"
+require "./ns"
 
 module Slang
   class Instance
@@ -61,11 +62,11 @@ module Slang
     end
   end
 
-  class Protocol
-    property name : String? = nil
-    property methods : Array(String)
+  class Protocol < NS
+    property methods : Set(String)
 
     def initialize(@methods)
+      super ""
     end
 
     def to_s(io)
@@ -83,7 +84,9 @@ module Slang
       if methods.includes? var
         Method.new self, var
       else
-        yield
+        super var do
+          yield
+        end
       end
     end
 

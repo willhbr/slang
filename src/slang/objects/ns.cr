@@ -40,7 +40,6 @@ end
 
 class NS
   property defs = Hash(String, Slang::Object).new
-  property aliased = Array(NS).new
   property name : String
 
   def initialize(@name)

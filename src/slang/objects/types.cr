@@ -15,9 +15,9 @@ class Protocols
     {% end %}]
   end
 
-  proto lengthable, ["length"]
-  proto printable, ["->string"]
-  proto enumerable, ["reduce"]
+  proto lengthable, Set(String).new ["length"]
+  proto printable, Set(String).new ["->string"]
+  proto enumerable, Set(String).new ["reduce"]
 end
 macro type(t, implement, is_class=true)
   {% name = (t.stringify + "Type").id %}
