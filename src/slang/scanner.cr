@@ -82,6 +82,8 @@ class Scanner
           yield sym(:"'")
         when '`'
           yield sym(:"`")
+        when '@'
+          yield sym(:"@")
         when '~'
           if peek? == '@'
             advance?

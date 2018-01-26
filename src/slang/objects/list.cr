@@ -208,6 +208,9 @@ module Slang
     def self.quoted(location, rest)
       create(Identifier.new(location, "quote"), rest)
     end
+    def self.derefed(location, rest)
+      create(Identifier.new(location, "deref"), rest)
+    end
     def self.unquote_spliced(location, rest)
       create(Identifier.new(location, "unquote-splice"), rest)
     end

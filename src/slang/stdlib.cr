@@ -151,6 +151,12 @@ class Lib::Runtime
       waiting.each &.receive
     end
 
+    func(ns, deref) do |args|
+      arg = args[0]
+      check_type arg, Slang::Dynamic, "Cannot deref non-dynamic var"
+      arg.value
+    end
+
     func(ns, eval) do |ast, _kw_args, bindings|
       Interpreter.expand_and_eval ast.first, bindings
     end

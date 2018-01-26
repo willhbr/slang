@@ -73,8 +73,10 @@ class Parser
       Slang::List.unquoted sym.location, o
     when :"~@"
       o = object
-      return nil unless o
       Slang::List.unquote_spliced sym.location, o
+    when :"@"
+      o = object
+      Slang::List.derefed sym.location, o
     when :READER_MACRO
       reader_macro
     when :IDENTIFIER
