@@ -100,7 +100,7 @@ module Slang
 
     def map(&block)
       current = @head
-      return unless current
+      return self unless current
       head = Node.new yield current.value
       prev = head
       current = current.rest

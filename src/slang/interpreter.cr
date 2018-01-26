@@ -92,11 +92,11 @@ class Interpreter
         expand_with_splice_quotes(ast, bindings, Slang::List)
       end
     when Slang::Map
-      result = Hash(Slang::Object, Slang::Object).new
+      result = Slang::Map.new
       ast.each do |k, v|
-        result[expand_and_eval(k, bindings)] = expand_and_eval(v, bindings)
+        result = result.set(expand_and_eval(k, bindings), expand_and_eval(v, bindings))
       end
-      return Slang::Map.new result
+      result
     else
       ast
     end
@@ -178,11 +178,9 @@ class Interpreter
       case first.simple
       when "macro"
         make_fun ast, Slang::Macro do
-          body = Array(Slang::Object).new
-          ast.from(2).each do |node|
-            body << expand_macros(node, bindings)
+          ast.from(2).map do |node|
+            expand_macros(node, bindings)
           end
-          Slang::List.from body
         end
       when "type"
         names = Array(Slang::Atom).new
@@ -251,17 +249,18 @@ class Interpreter
   def self.eval_node(ast : Slang::Object, bindings) : Slang::Result
     return case ast
     when Slang::Vector
+      # TODO this shouldn't be needed
       expanded = expand_with_splice_quotes(ast, bindings, Slang::Vector).as(Slang::Vector)
       expanded.each_with_index do |item, idx|
         expanded = expanded.set(idx, eval(item, bindings))
       end
       return expanded
     when Slang::Map
-      result = Hash(Slang::Object, Slang::Object).new
+      result = Slang::Map.new
       ast.each do |key, value|      
-        result[eval(key, bindings)] = eval(value, bindings)
+        result = result.set(eval(key, bindings), eval(value, bindings))
       end
-      Slang::Map.new(result)
+      result
     when Slang::Identifier
       ast.lookup! bindings
     else
