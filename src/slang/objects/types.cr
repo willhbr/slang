@@ -213,13 +213,6 @@ module Slang
     }
   }
 
-  type KeywordArg, {
-    Protocols.lengthable => {
-      "length" => Slang::CrystalFn.new("length") { |args|
-        args.first.as(NS).defs.size
-      }.as(Slang::Callable)
-    }
-  }, is_class: false
   type CrystalMacro, {
     Protocols.lengthable => {
       "length" => Slang::CrystalFn.new("length") { |args|

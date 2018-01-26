@@ -17,7 +17,7 @@ describe Slang do
           Interpreter.expand_macros(node, comp)
         end
         ast.each do |node|
-          Interpreter.eval(node, run, false)
+          Interpreter.eval(node, run)
         end
       end
     end

@@ -191,7 +191,7 @@ class Parser
   end
 
   def kw_arg(token)
-    Slang::KeywordArg.new token.value.as(String)
+    Slang::Atom.new token.value.as(String), true
   end
 
   def atom(token)

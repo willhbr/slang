@@ -46,7 +46,7 @@ class Interpreter
     kw_arg_name = nil
     values = Array(Slang::Object).new
     ast.rest.each do |arg|
-      if arg.is_a? Slang::KeywordArg
+      if arg.is_a? Slang::Atom && arg.kw_arg?
         error! "Missing value for keyword arg: #{kw_arg_name}" if kw_arg_name
         kw_arg_name = arg.value
       elsif n = kw_arg_name
