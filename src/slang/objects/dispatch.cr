@@ -65,8 +65,8 @@ module Slang
   class Protocol < NS
     property methods : Set(String)
 
-    def initialize(@methods)
-      super ""
+    def initialize(name, @methods)
+      super name
     end
 
     def to_s(io)

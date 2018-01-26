@@ -41,10 +41,10 @@ module Slang
     def lookup!(bindings)
       if s = simple
         bindings.fetch s do
-          @parts.lookup_first bindings["*ns*"].as(NSes), self
+          @parts.lookup bindings["*ns*"].as(Slang::Dynamic).value.as(NS), self
         end
       else
-        @parts.lookup_first bindings["*ns*"].as(NSes), self
+        @parts.lookup bindings["*ns*"].as(Slang::Dynamic).value.as(NS), self
       end
     end
 
@@ -64,28 +64,6 @@ module Slang
       @value = val
       if rest != ""
         @rest = IdentifierPart.new rest
-      end
-    end
-
-    def lookup_first(nses, root)
-      val = nses.current.lookup @value do
-        if ns = nses.get_ns(@value)
-          if r = @rest
-            return r.lookup(ns, root)
-          else
-            return ns
-          end
-        else
-          error! "Undefined ns #{root}"
-        end
-      end
-
-      if (r = @rest) && val.responds_to? :lookup
-        return r.lookup(val, root)
-      elsif @rest.nil?
-        return val
-      else
-        error! "Non-ns value defined in #{root}", root
       end
     end
 
@@ -149,9 +127,18 @@ module Slang
     end
   end
 
+  class Dynamic
+    property value : Object
+
+    def initialize(@value)
+    end
+
+    delegate :type, :to_s, :inspect, to: @value
+  end
+
   alias Object = (Int32 | String | Bool | Immutable::Vector(Object) | List |
-                  Immutable::Map(Object, Object) | Atom | Identifier | Splice |
-                  Function | Protocol | Callable | Instance | Regex | NSes | NS | Nil)
+                  Immutable::Map(Object, Object) | Dynamic | Atom | Identifier | Splice |
+                  Function | Protocol | Callable | Instance | Regex | NS | Nil)
 
   alias Result = Slang::Object
 

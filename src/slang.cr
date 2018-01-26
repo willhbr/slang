@@ -10,10 +10,6 @@ class Prompter
   end
 
   def initialize(@run, @compile)
-    Readline.autocomplete do |string|
-      defs = @run["*ns*"].as(NSes).current.defs.keys.select &.starts_with?(string)
-      defs + @run.keys
-    end
   end
 
   def read

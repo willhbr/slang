@@ -2,42 +2,6 @@ require "./objects"
 
 alias Bindings = Immutable::Map(String, Slang::Object)
 
-class NSes
-  property current : NS
-  property nses = Hash(String, NS).new
-
-  def initialize
-    @current = NS.new "Global"
-    @nses[@current.name] = @current
-  end
-
-  def change_ns(new_name)
-    prev = @current
-    @current = nses[new_name]? || NS.new new_name
-    @nses[new_name] = @current
-  end
-
-  def alias_to(old, new_name)
-    ns = @nses[old]
-    @nses[new_name] = ns
-  end
-
-  def to_s(io)
-    io << "ns: "
-    io << current.name
-    io << '\n'
-    nses.each do |name, ns|
-      ns.describe(io)
-    end
-  end
-
-  def get_ns(name : String) : NS?
-    @nses[name]?
-  end
-
-  delegate :[]=, :[], to: @current
-end
-
 class NS
   property defs = Hash(String, Slang::Object).new
   property name : String

@@ -118,8 +118,10 @@ class Interpreter
         case first.simple
         when "ns"
           name = ast[1]
-          raise "ns must be identifier" unless name.is_a? Slang::Identifier
-          bindings["*ns*"].as(NSes).change_ns(name.simple!)
+          check_type name, Slang::Identifier, "ns must be identifier"
+          ns = name.lookup?(bindings) || NS.new name.simple!
+          dyn = bindings["*ns*"].as(Slang::Dynamic)
+          dyn.value = ns
           return ast
         when "quote"
           return ast
@@ -129,7 +131,7 @@ class Interpreter
           name, value = ast.rest.splat_first_2
           check_type name, Slang::Identifier
           result = expand_macros(value, bindings) 
-          ns = bindings["*ns*"].as(NSes)
+          ns = bindings["*ns*"].as(Slang::Dynamic).value.as(NS)
           ns[name.simple!] = result
           if result.responds_to? :"name="
             result.name = name.simple!
@@ -191,8 +193,10 @@ class Interpreter
         return Slang::Type.new names
       when "ns"
         name = ast[1]
-        error! "ns must be identifier" unless name.is_a? Slang::Identifier
-        bindings["*ns*"].as(NSes).change_ns(name.simple!)
+        check_type name, Slang::Identifier, "ns must be identifier"
+        ns = name.lookup?(bindings) || NS.new name.simple!
+        dyn = bindings["*ns*"].as(Slang::Dynamic)
+        dyn.value = ns
         return nil
       when "let"
         inner = bindings
@@ -217,7 +221,7 @@ class Interpreter
         name, value = ast.rest.splat_first_2
         check_type name, Slang::Identifier, "name must be identifier"
         result = eval(value, bindings)
-        ns = bindings["*ns*"].as(NSes)
+        ns = bindings["*ns*"].as(Slang::Dynamic).value.as(NS)
         ns[name] = result
         if result.responds_to? :"name="
           result.name = name.simple!

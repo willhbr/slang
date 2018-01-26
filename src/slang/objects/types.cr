@@ -1,8 +1,7 @@
 class Protocols
   macro proto(name, methods)
-    @@{{ name }} = Slang::Protocol.new({{ methods }})
+    @@{{ name }} = Slang::Protocol.new({{ name.stringify.capitalize }}, {{ methods }})
     def self.{{ name }}
-      @@{{ name }}.name ||= {{ name.stringify.capitalize }}
       @@{{ name }}
     end
   end

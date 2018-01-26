@@ -14,13 +14,13 @@ class Lib::Runtime
   def self.new
     bind = Bindings.new
 
-    ns = NSes.new
+    ns = NS.new "Global"
 
     Protocols::ALL.each do |proto|
       ns[proto.name.as(String)] = proto
     end
     
-    bind = bind.set "*ns*", ns.as(Slang::Object)
+    bind = bind.set "*ns*", Slang::Dynamic.new ns
 
     func(ns, println) do |args|
       puts args.join(" ")
@@ -151,12 +151,6 @@ class Lib::Runtime
       waiting.each &.receive
     end
 
-    func(ns, :alias, type = Slang::CrystalMacro) do |args|
-      old, new = args
-      ns.alias_to(old.as(Slang::Identifier).simple!, new.as(Slang::Identifier).simple!)
-      nil
-    end
-
     func(ns, eval) do |ast, _kw_args, bindings|
       Interpreter.expand_and_eval ast.first, bindings
     end
@@ -173,7 +167,7 @@ class Lib::CompileTime
   def self.new(runtime = Lib::Runtime.new)
     bind = runtime
 
-    ns = bind["*ns*"].as(NSes)
+    ns = bind["*ns*"].as(Slang::Dynamic).value.as(NS)
 
     func(ns, :"expand-macros", type = Slang::CrystalMacro) do |ast, _kw_args, bindings|
       Interpreter.expand_macros(ast[0], bindings)
